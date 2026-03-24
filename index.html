@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TGF Stock Entry System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;
+  --card:#ffffff;
+  --border:#e5e3de;
+  --border2:#d0cdc7;
+  --text:#1a1917;
+  --text2:#6b6762;
+  --text3:#9c9892;
+  --accent:#1a1917;
+  --accent-fg:#f7f6f3;
+  --green:#1a7a4a;
+  --green-bg:#edf7f2;
+  --red:#b83232;
+  --red-bg:#fdf0f0;
+  --yellow:#8a6800;
+  --yellow-bg:#fdf8e7;
+  --radius:10px;
+  --radius-sm:6px;
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh}
+.app{max-width:960px;margin:0 auto;padding:2rem 1.25rem}
+
+/* Header */
+.header{margin-bottom:2rem}
+.header-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-size:22px;font-weight:600;letter-spacing:-0.5px}
+.brand span{color:var(--text2);font-weight:400}
+.subtitle{font-size:13px;color:var(--text2);margin-top:3px;font-family:'DM Mono',monospace}
+.sync-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);padding:6px 12px;background:var(--card);border:1px solid var(--border);border-radius:99px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3)}
+.sync-dot.ok{background:#2cb96a}
+.sync-dot.syncing{background:#f59e0b;animation:pulse 1s infinite}
+.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* Config Banner */
+.config-banner{background:#fffbeb;border:1px solid #f59e0b;border-radius:var(--radius);padding:14px 16px;margin-bottom:1.5rem;font-size:13px;color:#78350f;display:flex;align-items:flex-start;gap:10px}
+.config-banner svg{flex-shrink:0;margin-top:1px}
+.config-banner strong{display:block;margin-bottom:4px}
+.config-banner code{background:#fef3c7;padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px}
+
+/* Tabs */
+.tabs{display:flex;gap:2px;margin-bottom:1.5rem;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:4px}
+.tab{flex:1;padding:7px 10px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--text2);border-radius:var(--radius-sm);transition:all 0.15s;text-align:center}
+.tab.active{background:var(--accent);color:var(--accent-fg)}
+.tab:hover:not(.active){background:var(--bg);color:var(--text)}
+.section{display:none}.section.active{display:block}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
+.card-title{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text)}
+
+/* Forms */
+label{font-size:12px;color:var(--text2);font-weight:500;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
+select,input[type=date],input[type=number],input[type=text]{
+  height:38px;padding:0 11px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--card);color:var(--text);font-size:13px;width:100%;
+  font-family:'DM Sans',sans-serif;transition:border-color 0.15s;outline:none}
+select:focus,input:focus{border-color:var(--accent)}
+input[type=number]{text-align:center;font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
+
+/* Buttons */
+.btn{height:38px;padding:0 16px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  cursor:pointer;font-size:13px;font-weight:500;background:var(--card);color:var(--text);
+  display:inline-flex;align-items:center;gap:7px;transition:all 0.15s;font-family:'DM Sans',sans-serif}
+.btn:hover{background:var(--bg)}
+.btn-primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn-primary:hover{opacity:0.87}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-img{background:#4f46e5;color:#fff;border-color:#4f46e5}.btn-img:hover{background:#4338ca}
+.btn-wa{background:#25D366;color:#fff;border-color:#25D366}.btn-wa:hover{background:#1da851}
+.btn-sm{height:30px;padding:0 12px;font-size:12px}
+
+/* Stock grid */
+.slot-header{font-size:11px;font-weight:600;color:var(--text2);text-align:center;padding:7px;
+  background:var(--bg);border-radius:var(--radius-sm);letter-spacing:0.5px;text-transform:uppercase}
+.item-row{display:grid;grid-template-columns:170px repeat(3,1fr);gap:8px;align-items:center;margin-bottom:7px}
+.item-label{font-size:13px;font-weight:500;color:var(--text);padding:0 4px}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:500}
+.badge-ok{background:var(--green-bg);color:var(--green)}
+.badge-miss{background:var(--red-bg);color:var(--red)}
+.badge-partial{background:var(--yellow-bg);color:var(--yellow)}
+
+/* Metrics */
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow)}
+.metric-num{font-size:26px;font-weight:600;letter-spacing:-1px;color:var(--text)}
+.metric-label{font-size:11px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:0.4px;font-weight:500}
+
+/* Filter bar */
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:1.25rem}
+.filter-bar>div{flex:1;min-width:130px}
+
+/* Report table */
+.report-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:1rem;box-shadow:var(--shadow)}
+.report-title-bar{padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.report-title{font-size:13px;font-weight:600;color:var(--text)}
+table.report{width:100%;border-collapse:collapse;font-size:13px}
+table.report th{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600;background:var(--bg);text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:0.4px}
+table.report td{padding:8px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+table.report tr:last-child td{border-bottom:none}
+table.report tr.total-row td{font-weight:600;background:var(--bg);border-top:1px solid var(--border2)}
+table.report tr.zero td{color:var(--text3)}
+
+/* Miss card */
+.miss-card{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;
+  border-radius:var(--radius-sm);background:var(--card);border:1px solid var(--border);margin-bottom:6px;gap:12px;flex-wrap:wrap}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--accent);color:var(--accent-fg);
+  padding:10px 18px;border-radius:var(--radius-sm);font-size:13px;opacity:0;transition:opacity 0.25s;
+  pointer-events:none;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-weight:500}
+.toast.show{opacity:1}
+
+/* Settings panel */
+.settings-row{display:flex;align-items:flex-end;gap:10px;margin-bottom:12px}
+.settings-row>div{flex:1}
+.url-input{font-family:'DM Mono',monospace;font-size:12px}
+
+@media(max-width:600px){
+  .metric-grid{grid-template-columns:repeat(2,1fr)}
+  .item-row{grid-template-columns:120px repeat(3,1fr);gap:5px}
+  .tabs .tab{font-size:11px;padding:6px 6px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-top">
+      <div>
+        <div class="brand">TGF Stock Entry <span>System</span></div>
+        <div class="subtitle">Entry times: 1:00 PM · 7:00 PM · 10:00 PM</div>
+      </div>
+      <div class="sync-status" id="sync-status">
+        <div class="sync-dot" id="sync-dot"></div>
+        <span id="sync-text">Not connected</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config Banner (shown until URL is set) -->
+  <div class="config-banner" id="config-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <div>
+      <strong>Setup required — paste your Google Apps Script URL</strong>
+      Go to the <strong>Settings</strong> tab and enter your deployed Apps Script Web App URL to connect to Google Sheets.
+      See the README card in Settings for full instructions.
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('entry')">Entry Form</button>
+    <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab" onclick="switchTab('finalreport')">Final Report</button>
+    <button class="tab" onclick="switchTab('missing')">Missing</button>
+    <button class="tab" onclick="switchTab('settings')">Settings</button>
+  </div>
+
+  <!-- ===================== ENTRY FORM ===================== -->
+  <div id="entry" class="section active">
+    <div class="card">
+      <div class="card-title">Branch & Date</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label>Branch Name</label><select id="branch-select"><option value="">— Select branch —</option></select></div>
+        <div><label>Date</label><input type="date" id="entry-date"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Stock Quantities (KG)</div>
+      <div style="display:grid;grid-template-columns:170px repeat(3,1fr);gap:8px;margin-bottom:10px">
+        <div></div>
+        <div class="slot-header">1:00 PM</div>
+        <div class="slot-header">7:00 PM</div>
+        <div class="slot-header">10:00 PM</div>
+      </div>
+      <div id="items-container"></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn" onclick="clearForm()">Clear</button>
+      <button class="btn btn-primary" onclick="submitEntry()" id="submit-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Submit Entry
+      </button>
+    </div>
+  </div>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <div id="dashboard" class="section">
+    <div class="filter-bar">
+      <div><label>Date</label><input type="date" id="dash-date" onchange="renderDashboard()"></div>
+      <div><label>Item</label><select id="dash-item" onchange="renderDashboard()"><option value="all">All Items</option></select></div>
+      <div><label>Branch</label><select id="dash-branch" onchange="renderDashboard()"><option value="all">All Branches</option></select></div>
+      <div><label>Time Slot</label>
+        <select id="dash-slot" onchange="renderDashboard()">
+          <option value="all">All Slots</option>
+          <option value="s1">1:00 PM</option>
+          <option value="s2">7:00 PM</option>
+          <option value="s3">10:00 PM</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end">
+        <button class="btn btn-sm" onclick="loadFromSheet()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.42"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div class="metric-grid" id="metric-cards"></div>
+    <div class="report-wrap"><div style="overflow-x:auto"><table class="report"><thead><tr id="dash-head"></tr></thead><tbody id="dash-body"></tbody></table></div></div>
+    <div id="branch-breakdown"></div>
+  </div>
+
+  <!-- ===================== FINAL REPORT ===================== -->
+  <div id="finalreport" class="section">
+    <div class="filter-bar">
+      <div><label>Date</label><input type="date" id="rep-date" onchange="renderReport()"></div>
+      <div><label>Item</label><select id="rep-item" onchange="renderReport()"></select></div>
+      <div><label>Time Slot</label>
+        <select id="rep-slot" onchange="renderReport()">
+          <option value="all">All Slots (Total)</option>
+          <option value="s1">1:00 PM</option>
+          <option value="s2">7:00 PM</option>
+          <option value="s3">10:00 PM</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:8px">
+        <button class="btn" onclick="printReport()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+        <button class="btn btn-img" onclick="downloadImage()" id="dl-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Image
+        </button>
+      </div>
+    </div>
+    <div id="report-capture" style="background:#fff;padding:4px 0"></div>
+  </div>
+
+  <!-- ===================== MISSING ===================== -->
+  <div id="missing" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div style="font-size:15px;font-weight:600">Missing Entries</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="date" id="miss-date" style="height:34px;padding:0 10px;width:160px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderMissing()">
+        <button class="btn btn-sm" onclick="loadFromSheet()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.42"/></svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+    <div class="metric-grid" style="grid-template-columns:repeat(3,1fr)" id="miss-metrics"></div>
+    <div id="miss-list"></div>
+  </div>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <div id="settings" class="section">
+    <div class="card">
+      <div class="card-title">Google Sheets Connection</div>
+      <div class="settings-row">
+        <div>
+          <label>Apps Script Web App URL</label>
+          <input type="text" id="sheet-url" class="url-input" placeholder="https://script.google.com/macros/s/YOUR_ID/exec" oninput="saveSheetUrl()">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="testConnection()">Test Connection</button>
+      </div>
+      <div id="connection-result" style="font-size:12px;margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Setup Instructions</div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8">
+        <p style="font-weight:600;color:var(--text);margin-bottom:8px">Step 1 — Create the Google Sheet</p>
+        <p>Open <a href="https://sheets.google.com" target="_blank" style="color:#4f46e5">sheets.google.com</a>, create a new sheet named <strong>Stock Entry Data</strong>.</p>
+        <p style="margin-top:4px">In Row 1, add these headers exactly:</p>
+        <code style="display:block;background:var(--bg);padding:8px 12px;border-radius:var(--radius-sm);margin:6px 0;font-size:12px;font-family:'DM Mono',monospace">Branch | Date | Item | S1_1PM | S2_7PM | S3_10PM | Timestamp</code>
+
+        <p style="font-weight:600;color:var(--text);margin-top:14px;margin-bottom:8px">Step 2 — Add the Apps Script</p>
+        <p>In the sheet: <strong>Extensions → Apps Script</strong>. Delete all code and paste this:</p>
+        <pre style="background:var(--bg);padding:10px 14px;border-radius:var(--radius-sm);margin:8px 0;font-size:11.5px;font-family:'DM Mono',monospace;overflow-x:auto;line-height:1.6">function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  data.rows.forEach(function(row) { sheet.appendRow(row); });
+  var output = ContentService.createTextOutput(JSON.stringify({status:"ok"}));
+  output.setMimeType(ContentService.MimeType.JSON);
+  return output;
+}
+
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var values = sheet.getDataRange().getValues();
+  var output = ContentService.createTextOutput(JSON.stringify(values));
+  output.setMimeType(ContentService.MimeType.JSON);
+  return output;
+}</pre>
+
+        <p style="font-weight:600;color:var(--text);margin-top:14px;margin-bottom:8px">Step 3 — Deploy</p>
+        <p>Click <strong>Deploy → New Deployment</strong></p>
+        <p>• Type: <strong>Web App</strong></p>
+        <p>• Execute as: <strong>Me</strong></p>
+        <p>• Who has access: <strong>Anyone</strong></p>
+        <p style="margin-top:4px">Click <strong>Deploy</strong> → Copy the Web App URL → Paste it above.</p>
+
+        <p style="font-weight:600;color:var(--text);margin-top:14px;margin-bottom:8px">Step 4 — Host on GitHub Pages (free)</p>
+        <p>1. Create a free account at <a href="https://github.com" target="_blank" style="color:#4f46e5">github.com</a></p>
+        <p>2. Create a new repository (name it anything, e.g. <code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--bg);padding:1px 5px;border-radius:3px">stock-entry</code>), set to <strong>Public</strong></p>
+        <p>3. Upload this file renamed as <strong>index.html</strong></p>
+        <p>4. Go to <strong>Settings → Pages → Deploy from branch → main</strong> → Save</p>
+        <p>5. Your site will be live at: <code style="font-family:'DM Mono',monospace;font-size:11px;background:var(--bg);padding:1px 5px;border-radius:3px">https://yourusername.github.io/stock-entry/</code></p>
+        <p style="margin-top:10px;color:var(--green);font-weight:500">✓ All branches can now open this URL and submit entries. All data saves to your Google Sheet!</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Local Data</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:12px">Data is also stored locally in this browser as a backup. You can clear it here.</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" onclick="loadFromSheet()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.42"/></svg>
+          Pull latest from Sheet
+        </button>
+        <button class="btn" style="color:var(--red);border-color:var(--red)" onclick="clearLocalData()">Clear local data</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script>
+// =============================================
+// CONFIGURATION
+// =============================================
+const BRANCHES=["KRM","EC-KTR","KTR","INTL","HE","DVH","KH","BFD","KGL","MAJ","K-BEL","RJN","ARK","KNK","INDR","HSR","JYN","RTN","MDR","MSQ","K-KLN","K-MDP","K-SIR","CST","K-BNK","K-ECT","VSN","MYS","VJN","K-RRN","K-YLK","KLR","HSN","NXS","ORN","SLG","LULU","CBP","PMC","KPN","HSK"];
+const ITEMS=[
+  {id:"alfaham",label:"Alfaham"},
+  {id:"tandoori",label:"Tandoori Chicken"},
+  {id:"grill",label:"Grill Chicken"},
+  {id:"butter",label:"Butter Chicken"},
+  {id:"kabab",label:"Kabab Masala"},
+  {id:"tandoori_ball",label:"Tandoori Ball (125g)"},
+  {id:"parota_ball",label:"Parota Ball (125g)"}
+];
+const SLOTS=[{key:"s1",label:"1:00 PM"},{key:"s2",label:"7:00 PM"},{key:"s3",label:"10:00 PM"}];
+const WA_NUMBERS={};
+
+// =============================================
+// STATE
+// =============================================
+let entries=[];
+let SHEET_URL='';
+
+try{entries=JSON.parse(localStorage.getItem('tgfStock')||'[]')}catch(e){}
+try{SHEET_URL=localStorage.getItem('tgfSheetUrl')||''}catch(e){}
+
+function save(){try{localStorage.setItem('tgfStock',JSON.stringify(entries))}catch(e){}}
+function today(){return new Date().toISOString().slice(0,10)}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500)}
+
+function setSyncStatus(state,text){
+  document.getElementById('sync-dot').className='sync-dot '+state;
+  document.getElementById('sync-text').textContent=text;
+}
+
+// =============================================
+// SHEET URL MANAGEMENT
+// =============================================
+function saveSheetUrl(){
+  SHEET_URL=document.getElementById('sheet-url').value.trim();
+  localStorage.setItem('tgfSheetUrl',SHEET_URL);
+  updateConfigBanner();
+}
+
+function updateConfigBanner(){
+  const banner=document.getElementById('config-banner');
+  if(SHEET_URL&&SHEET_URL.includes('script.google.com')){
+    banner.style.display='none';
+  } else {
+    banner.style.display='flex';
+  }
+}
+
+function testConnection(){
+  const url=document.getElementById('sheet-url').value.trim();
+  if(!url){showToast('Enter a URL first');return;}
+  const result=document.getElementById('connection-result');
+  result.innerHTML='<span style="color:var(--text2)">Testing…</span>';
+  setSyncStatus('syncing','Testing…');
+  fetch(url)
+    .then(r=>r.json())
+    .then(data=>{
+      if(Array.isArray(data)){
+        result.innerHTML='<span style="color:var(--green)">✓ Connected! Found '+Math.max(0,data.length-1)+' data rows in sheet.</span>';
+        setSyncStatus('ok','Connected');
+        showToast('Connection successful!');
+        SHEET_URL=url;
+        localStorage.setItem('tgfSheetUrl',url);
+        updateConfigBanner();
+        parseSheetData(data);
+      } else {
+        result.innerHTML='<span style="color:var(--red)">✗ Unexpected response. Check your Apps Script code.</span>';
+        setSyncStatus('error','Error');
+      }
+    })
+    .catch(err=>{
+      result.innerHTML='<span style="color:var(--red)">✗ Could not reach URL. Make sure you deployed as "Anyone" access.</span>';
+      setSyncStatus('error','Not connected');
+    });
+}
+
+// =============================================
+// GOOGLE SHEETS SYNC
+// =============================================
+function parseSheetData(rows){
+  // rows[0] = headers, rows[1+] = data
+  if(!rows||rows.length<2)return;
+  const newEntries=[];
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r[0]||!r[1]||!r[2])continue; // branch, date, item required
+    const branch=String(r[0]);
+    const date=String(r[1]);
+    const item=String(r[2]);
+    const s1=parseFloat(r[3])||0;
+    const s2=parseFloat(r[4])||0;
+    const s3=parseFloat(r[5])||0;
+    let entry=newEntries.find(e=>e.branch===branch&&e.date===date);
+    if(!entry){entry={branch,date,items:{}};newEntries.push(entry);}
+    entry.items[item]={s1,s2,s3};
+  }
+  entries=newEntries;
+  save();
+  setSyncStatus('ok','Synced');
+  showToast('Loaded '+Math.max(0,rows.length-1)+' records from Sheet');
+}
+
+function loadFromSheet(){
+  if(!SHEET_URL){showToast('Set your Sheet URL in Settings first');return;}
+  setSyncStatus('syncing','Syncing…');
+  document.getElementById('sync-text').textContent='Syncing…';
+  fetch(SHEET_URL)
+    .then(r=>r.json())
+    .then(data=>{
+      parseSheetData(data);
+      renderDashboard();
+      renderReport();
+      renderMissing();
+    })
+    .catch(()=>{
+      setSyncStatus('error','Sync failed');
+      showToast('Could not load from Sheet — check connection');
+    });
+}
+
+function pushToSheet(rows){
+  if(!SHEET_URL)return Promise.resolve();
+  setSyncStatus('syncing','Saving…');
+  return fetch(SHEET_URL,{
+    method:'POST',
+    body:JSON.stringify({rows}),
+    headers:{'Content-Type':'application/json'}
+  })
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.status==='ok'){setSyncStatus('ok','Saved');}
+    else{setSyncStatus('error','Save error');}
+  })
+  .catch(()=>{
+    setSyncStatus('error','Save failed');
+    showToast('Warning: saved locally but Sheet sync failed');
+  });
+}
+
+// =============================================
+// TABS
+// =============================================
+function switchTab(name){
+  const tabs=['entry','dashboard','finalreport','missing','settings'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  if(name==='dashboard')renderDashboard();
+  if(name==='finalreport')renderReport();
+  if(name==='missing')renderMissing();
+}
+
+// =============================================
+// BUILD FORM
+// =============================================
+function buildForm(){
+  const sel=document.getElementById('branch-select');
+  BRANCHES.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o)});
+  const di=document.getElementById('dash-item');
+  ITEMS.forEach(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.label;di.appendChild(o)});
+  const ri=document.getElementById('rep-item');
+  ITEMS.forEach(item=>{const o=document.createElement('option');o.value=item.id;o.textContent=item.label;ri.appendChild(o)});
+  const db=document.getElementById('dash-branch');
+  BRANCHES.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;db.appendChild(o)});
+  const t=today();
+  ['entry-date','dash-date','rep-date','miss-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t});
+  const c=document.getElementById('items-container');
+  ITEMS.forEach(item=>{
+    const row=document.createElement('div');row.className='item-row';
+    row.innerHTML=`<div class="item-label">${item.label}</div>`+
+      SLOTS.map(s=>`<input type="number" min="0" placeholder="0" id="${item.id}_${s.key}">`).join('');
+    c.appendChild(row);
+  });
+  // Restore saved URL
+  if(SHEET_URL){
+    document.getElementById('sheet-url').value=SHEET_URL;
+    updateConfigBanner();
+    setSyncStatus('ok','URL configured');
+    // Auto-load from sheet on start
+    loadFromSheet();
+  }
+}
+
+function clearForm(){
+  document.getElementById('branch-select').value='';
+  ITEMS.forEach(item=>SLOTS.forEach(s=>{const el=document.getElementById(`${item.id}_${s.key}`);if(el)el.value=''}));
+}
+
+// =============================================
+// SUBMIT ENTRY
+// =============================================
+function submitEntry(){
+  const branch=document.getElementById('branch-select').value;
+  const date=document.getElementById('entry-date').value;
+  if(!branch){showToast('Please select a branch');return;}
+  if(!date){showToast('Please select a date');return;}
+  const data={branch,date,items:{}};
+  const timestamp=new Date().toISOString();
+  const rowsToAppend=[];
+  ITEMS.forEach(item=>{
+    data.items[item.id]={};
+    const s1=parseInt(document.getElementById(`${item.id}_s1`).value)||0;
+    const s2=parseInt(document.getElementById(`${item.id}_s2`).value)||0;
+    const s3=parseInt(document.getElementById(`${item.id}_s3`).value)||0;
+    data.items[item.id]={s1,s2,s3};
+    rowsToAppend.push([branch,date,item.id,s1,s2,s3,timestamp]);
+  });
+  // Save locally
+  const idx=entries.findIndex(e=>e.branch===branch&&e.date===date);
+  if(idx>=0)entries[idx]=data;else entries.push(data);
+  save();
+  // Push to sheet
+  const btn=document.getElementById('submit-btn');
+  btn.disabled=true;btn.textContent='Saving…';
+  pushToSheet(rowsToAppend).finally(()=>{
+    btn.disabled=false;
+    btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Submit Entry';
+    showToast('Entry saved for '+branch);
+    clearForm();
+  });
+}
+
+// =============================================
+// DASHBOARD
+// =============================================
+function renderDashboard(){
+  const date=document.getElementById('dash-date').value;
+  const selItem=document.getElementById('dash-item').value;
+  const selBranch=document.getElementById('dash-branch').value;
+  const selSlot=document.getElementById('dash-slot').value;
+  let dayEntries=entries.filter(e=>e.date===date);
+  if(selBranch!=='all')dayEntries=dayEntries.filter(e=>e.branch===selBranch);
+  const submitted=entries.filter(e=>e.date===date).length;
+  const missing=BRANCHES.length-submitted;
+  let grandTotal=0;
+  const activeSlots=selSlot==='all'?SLOTS:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
+  const activeItems=selItem==='all'?ITEMS:[ITEMS.find(i=>i.id===selItem)].filter(Boolean);
+  dayEntries.forEach(e=>{activeItems.forEach(item=>activeSlots.forEach(s=>grandTotal+=(e.items[item.id]||{})[s.key]||0))});
+  document.getElementById('metric-cards').innerHTML=`
+    <div class="metric-card"><div class="metric-num">${submitted}</div><div class="metric-label">Submitted</div></div>
+    <div class="metric-card"><div class="metric-num" style="color:var(--red)">${missing}</div><div class="metric-label">Missing</div></div>
+    <div class="metric-card"><div class="metric-num">${BRANCHES.length}</div><div class="metric-label">Total Branches</div></div>
+    <div class="metric-card"><div class="metric-num">${grandTotal}</div><div class="metric-label">${selItem==='all'?'All Items Total':'Item Total'}</div></div>`;
+  const head=document.getElementById('dash-head');
+  const body=document.getElementById('dash-body');
+  if(selItem!=='all'){
+    const item=ITEMS.find(i=>i.id===selItem);
+    head.innerHTML=`<th>Branch</th>`+activeSlots.map(s=>`<th>${s.label}</th>`).join('')+`<th>Total</th><th>Status</th>`;
+    body.innerHTML='';
+    const slotTotals=activeSlots.map(()=>0);let overallTotal=0;
+    BRANCHES.forEach(b=>{
+      if(selBranch!=='all'&&b!==selBranch)return;
+      const e=entries.find(x=>x.branch===b&&x.date===date);
+      let rowTotal=0;
+      const vals=activeSlots.map((s,i)=>{const v=(e?.items[item.id]||{})[s.key]||0;slotTotals[i]+=v;rowTotal+=v;overallTotal+=v;return v});
+      const status=!e?`<span class="badge badge-miss">Not submitted</span>`:rowTotal===0?`<span class="badge badge-partial">No stock</span>`:`<span class="badge badge-ok">Submitted</span>`;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td style="font-weight:500">${b}</td>`+vals.map(v=>`<td>${v}</td>`).join('')+`<td style="font-weight:600">${rowTotal}</td><td>${status}</td>`;
+      body.appendChild(tr);
+    });
+    const tot=document.createElement('tr');tot.className='total-row';
+    tot.innerHTML=`<td>TOTAL</td>`+slotTotals.map(v=>`<td>${v}</td>`).join('')+`<td>${overallTotal}</td><td></td>`;
+    body.appendChild(tot);
+    document.getElementById('branch-breakdown').innerHTML='';
+    return;
+  }
+  head.innerHTML=`<th>Item</th>`+activeSlots.map(s=>`<th>${s.label}</th>`).join('')+`<th>Total</th>`;
+  body.innerHTML='';
+  activeItems.forEach(item=>{
+    const slotVals=activeSlots.map(s=>dayEntries.reduce((a,e)=>a+((e.items[item.id]||{})[s.key]||0),0));
+    const total=slotVals.reduce((a,b)=>a+b,0);
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="font-weight:500">${item.label}</td>`+slotVals.map(v=>`<td>${v}</td>`).join('')+`<td style="font-weight:600">${total}</td>`;
+    body.appendChild(tr);
+  });
+  const bb=document.getElementById('branch-breakdown');bb.innerHTML='';
+  const fbranches=selBranch==='all'?BRANCHES:[selBranch];
+  fbranches.forEach(b=>{
+    const e=dayEntries.find(x=>x.branch===b);if(!e)return;
+    const wrap=document.createElement('div');wrap.className='card';wrap.style.marginBottom='10px';
+    let html=`<p style="font-size:14px;font-weight:600;margin-bottom:10px">${b}</p><div style="overflow-x:auto"><table class="report"><thead><tr><th>Item</th>`+activeSlots.map(s=>`<th>${s.label}</th>`).join('')+`<th>Total</th></tr></thead><tbody>`;
+    activeItems.forEach(item=>{
+      const vals=activeSlots.map(s=>(e.items[item.id]||{})[s.key]||0);
+      const t=vals.reduce((a,b)=>a+b,0);
+      html+=`<tr><td>${item.label}</td>`+vals.map(v=>`<td>${v}</td>`).join('')+`<td style="font-weight:600">${t}</td></tr>`;
+    });
+    html+=`</tbody></table></div>`;wrap.innerHTML=html;bb.appendChild(wrap);
+  });
+}
+
+// =============================================
+// FINAL REPORT
+// =============================================
+function renderReport(){
+  const date=document.getElementById('rep-date').value;
+  const selItem=document.getElementById('rep-item').value;
+  const selSlot=document.getElementById('rep-slot').value;
+  const item=ITEMS.find(i=>i.id===selItem)||ITEMS[0];
+  const capture=document.getElementById('report-capture');
+  capture.innerHTML='';
+  const slotsToShow=selSlot==='all'?[null]:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
+  slotsToShow.forEach(slotFilter=>{
+    const slotLabel=slotFilter?slotFilter.label:'All Slots (Total)';
+    const dateFormatted=date?new Date(date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'-';
+    const wrap=document.createElement('div');wrap.className='report-wrap';
+    let grandT=0;
+    const rowsHtml=BRANCHES.map(b=>{
+      const e=entries.find(x=>x.branch===b&&x.date===date);
+      const qty=slotFilter?(e?.items[item.id]||{})[slotFilter.key]||0:SLOTS.reduce((a,s)=>a+((e?.items[item.id]||{})[s.key]||0),0);
+      grandT+=qty;
+      return `<tr class="${qty===0?'zero':''}"><td style="font-weight:500">${b}</td><td>KG</td><td style="text-align:right">${qty}</td></tr>`;
+    }).join('');
+    wrap.innerHTML=`
+      <div class="report-title-bar">
+        <span class="report-title">TGF Report — ${item.label}</span>
+        <span style="font-size:12px;color:var(--text2)">${dateFormatted} &nbsp;·&nbsp; <strong>${slotLabel}</strong></span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="report">
+          <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()}</th></tr></thead>
+          <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right">${grandT}</td></tr></tbody>
+        </table>
+      </div>`;
+    capture.appendChild(wrap);
+  });
+  if(selSlot==='all'){
+    const div=document.createElement('p');
+    div.style.cssText='font-size:13px;font-weight:600;color:var(--text2);margin:1.5rem 0 10px';
+    div.textContent='Per slot breakdown';
+    capture.appendChild(div);
+    SLOTS.forEach(slot=>{
+      const wrap=document.createElement('div');wrap.className='report-wrap';
+      let grandT=0;
+      const rowsHtml=BRANCHES.map(b=>{
+        const e=entries.find(x=>x.branch===b&&x.date===date);
+        const qty=(e?.items[item.id]||{})[slot.key]||0;grandT+=qty;
+        return `<tr class="${qty===0?'zero':''}"><td style="font-weight:500">${b}</td><td>KG</td><td style="text-align:right">${qty}</td></tr>`;
+      }).join('');
+      const dateFormatted=date?new Date(date+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'-';
+      wrap.innerHTML=`
+        <div class="report-title-bar">
+          <span class="report-title">${item.label}</span>
+          <span style="font-size:12px;color:var(--text2)">${dateFormatted} &nbsp;·&nbsp; <strong>${slot.label}</strong></span>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="report">
+            <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()}</th></tr></thead>
+            <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right">${grandT}</td></tr></tbody>
+          </table>
+        </div>`;
+      capture.appendChild(wrap);
+    });
+  }
+}
+
+// =============================================
+// MISSING ENTRIES
+// =============================================
+function renderMissing(){
+  const date=document.getElementById('miss-date').value;
+  const submitted=new Set(entries.filter(e=>e.date===date).map(e=>e.branch));
+  const missBranches=BRANCHES.filter(b=>!submitted.has(b));
+  const partial=[],ok=[];
+  submitted.forEach(b=>{
+    const e=entries.find(x=>x.branch===b&&x.date===date);
+    const hasAll=e&&ITEMS.every(item=>SLOTS.some(s=>(e.items[item.id]||{})[s.key]>0));
+    hasAll?ok.push(b):partial.push(b);
+  });
+  document.getElementById('miss-metrics').innerHTML=`
+    <div class="metric-card"><div class="metric-num" style="color:var(--red)">${missBranches.length}</div><div class="metric-label">Not submitted</div></div>
+    <div class="metric-card"><div class="metric-num" style="color:var(--yellow)">${partial.length}</div><div class="metric-label">Partial</div></div>
+    <div class="metric-card"><div class="metric-num" style="color:var(--green)">${ok.length}</div><div class="metric-label">Complete</div></div>`;
+  const list=document.getElementById('miss-list');list.innerHTML='';
+  if(!missBranches.length&&!partial.length){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2);font-size:14px">✓ All branches submitted complete entries.</div>';return;}
+  const makeSection=(title,branches,type)=>{
+    if(!branches.length)return;
+    const h=document.createElement('p');h.style.cssText='font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;margin-top:16px;text-transform:uppercase;letter-spacing:0.4px';h.textContent=title;list.appendChild(h);
+    branches.forEach(b=>{
+      const div=document.createElement('div');div.className='miss-card';
+      const waId=`wa_${b.replace(/[^a-z0-9]/gi,'_')}`;
+      div.innerHTML=`
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:14px;font-weight:500">${b}</span>
+          <span class="badge badge-${type==='miss'?'miss':'partial'}">${type==='miss'?'Not submitted':'Partial'}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="text" placeholder="+91xxxxxxxxxx" id="${waId}" value="${WA_NUMBERS[b]||''}" style="width:150px;height:30px;font-size:13px" oninput="WA_NUMBERS['${b}']=this.value">
+          <button class="btn btn-sm btn-wa" onclick="sendWA('${b}','${date}','${waId}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.111.548 4.09 1.505 5.812L.057 23.012a.75.75 0 0 0 .93.93l5.2-1.448A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.809 9.809 0 0 1-5.012-1.375l-.36-.215-3.085.86.859-3.085-.215-.36A9.817 9.817 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+            WhatsApp
+          </button>
+        </div>`;
+      list.appendChild(div);
+    });
+  };
+  makeSection('Not submitted',missBranches,'miss');
+  makeSection('Partial entries',partial,'partial');
+}
+
+function sendWA(branch,date,waId){
+  const num=document.getElementById(waId).value.trim().replace(/[^0-9+]/g,'');
+  if(!num){showToast('Enter WhatsApp number for '+branch);return;}
+  const msg=encodeURIComponent(`Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\nPlease submit at:\n• 1:00 PM\n• 7:00 PM\n• 10:00 PM\n\nThank you.`);
+  const clean=num.startsWith('+')?num.slice(1):num;
+  window.open(`https://wa.me/${clean}?text=${msg}`,'_blank');
+}
+
+// =============================================
+// PRINT & DOWNLOAD
+// =============================================
+function printReport(){
+  const capture=document.getElementById('report-capture');
+  if(!capture.innerHTML.trim()){showToast('No report to print');return;}
+  const win=window.open('','_blank');
+  win.document.write(`<html><head><title>TGF Stock Report</title><style>
+    body{font-family:'DM Sans',Arial,sans-serif;font-size:13px;padding:20px;color:#111;background:#fff}
+    .report-wrap{border:1px solid #ddd;border-radius:6px;overflow:hidden;margin-bottom:20px}
+    .report-title-bar{padding:10px 14px;background:#f5f5f5;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center}
+    .report-title{font-size:13px;font-weight:600}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:7px 12px;border-bottom:1px solid #eee;text-align:left}
+    th{background:#fafafa;font-weight:600;color:#555;font-size:12px}
+    tr.zero td{color:#aaa}
+    tr.total-row td{font-weight:700;background:#f5f5f5;border-top:1px solid #ddd}
+    @media print{button{display:none}}
+  </style></head><body>`);
+  win.document.write('<button onclick="window.print()" style="margin-bottom:16px;padding:8px 18px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-family:inherit">🖨 Print</button>');
+  win.document.write(capture.innerHTML);
+  win.document.write('</body></html>');
+  win.document.close();
+}
+
+function downloadImage(){
+  const capture=document.getElementById('report-capture');
+  if(!capture.innerHTML.trim()){showToast('Generate a report first');return;}
+  const btn=document.getElementById('dl-btn');
+  btn.textContent='Generating…';btn.disabled=true;
+  // Temporarily apply white background styles for capture
+  const origBg=capture.style.background;
+  capture.style.background='#ffffff';
+  html2canvas(capture,{
+    backgroundColor:'#ffffff',
+    scale:2,
+    useCORS:true,
+    logging:false
+  }).then(canvas=>{
+    const link=document.createElement('a');
+    const date=document.getElementById('rep-date').value||today();
+    const item=document.getElementById('rep-item').value||'report';
+    link.download=`TGF_Report_${item}_${date}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    capture.style.background=origBg;
+    btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Image';
+    btn.disabled=false;
+    showToast('Image downloaded!');
+  }).catch(()=>{
+    capture.style.background=origBg;
+    showToast('Download failed — try Print instead');
+    btn.innerHTML='Image';btn.disabled=false;
+  });
+}
+
+function clearLocalData(){
+  if(!confirm('Clear all locally stored data? This will not affect Google Sheets.'))return;
+  entries=[];
+  save();
+  showToast('Local data cleared');
+}
+
+// =============================================
+// INIT
+// =============================================
+buildForm();
+</script>
+</body>
+</html>
