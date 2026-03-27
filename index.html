@@ -174,13 +174,13 @@ table.report tr.zero td{color:var(--text3)}
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchTab('entry')">Entry Form</button>
-    <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
-    <button class="tab" onclick="switchTab('finalreport')">Stock Report</button>
-    <button class="tab" onclick="switchTab('missing')">Missing</button>
+    <button class="tab active" data-tab="entry" onclick="switchTab('entry')">Entry Form</button>
+    <button class="tab" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab" data-tab="finalreport" onclick="switchTab('finalreport')">Stock Report</button>
+    <button class="tab" data-tab="missing" onclick="switchTab('missing')">Missing</button>
     <button class="tab" onclick="switchTab('items')">⚙ Items</button>
     <button class="tab" onclick="switchTab('contacts')">📞 Contacts</button>
-    <button class="tab" onclick="switchTab('settings')">Settings</button>
+    <button class="tab" data-tab="settings" onclick="switchTab('settings')">Settings</button>
   </div>
 
   <!-- ===== ENTRY FORM ===== -->
@@ -441,6 +441,9 @@ const DEFAULT_SHEET_URL='https://script.google.com/macros/s/AKfycbxG1fFuECb0C6eK
 let ITEMS=[], entries=[], SHEET_URL=DEFAULT_SHEET_URL, pendingQueue=[];
 let PHONE_NUMBERS={};   // {branchName: "+91xxxxxxxxxx"}
 let notifiedToday={};   // {date_slot: Set of branches already notified}
+const URL_PARAMS=new URLSearchParams(window.location.search);
+const FORM_ONLY_MODE=['form','entry','branch'].includes((URL_PARAMS.get('view')||'').toLowerCase());
+const LOCKED_BRANCH=(URL_PARAMS.get('branch')||'').trim();
 
 function loadState(){
   try{entries=JSON.parse(localStorage.getItem('tgfStock')||'[]')}catch(e){entries=[];}
@@ -468,6 +471,15 @@ function setSyncStatus(state,text){document.getElementById('sync-dot').className
 function normText(v){return String(v||'').trim();}
 function getMissingSlotLabels(entry,slotsToCheck){
   return slotsToCheck.filter(s=>!entry||!ITEMS.some(item=>(entry.items[item.id]||{})[s.key]>0)).map(s=>s.entryLabel);
+}
+function applyViewMode(){
+  if(!FORM_ONLY_MODE)return;
+  document.querySelectorAll('.tab').forEach((tab,idx)=>{if(idx>0)tab.style.display='none';});
+  const branchSelect=document.getElementById('branch-select');
+  if(branchSelect&&LOCKED_BRANCH&&BRANCHES.includes(LOCKED_BRANCH)){
+    branchSelect.value=LOCKED_BRANCH;
+    branchSelect.disabled=true;
+  }
 }
 function buildWAMessage(branch,date,missSlots){
   const slots=Array.isArray(missSlots)&&missSlots.length?missSlots:['All slots'];
@@ -697,6 +709,7 @@ function testWA(branch,inputId){
 // TABS
 // ============================================================
 function switchTab(name){
+  if(FORM_ONLY_MODE&&name!=='entry')return;
   const tabs=['entry','dashboard','finalreport','missing','items','contacts','settings'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
@@ -716,6 +729,7 @@ function buildForm(){
   loadState();
   const sel=document.getElementById('branch-select');
   BRANCHES.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;sel.appendChild(o)});
+  applyViewMode();
   rebuildSelectOptions();
   const t=today();
   ['entry-date','dash-date','rep-date','miss-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t});
