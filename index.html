@@ -51,6 +51,7 @@ input[type=number]{text-align:center;font-family:'DM Mono',monospace;font-size:1
 .btn-wa{background:#25D366;color:#fff;border-color:#25D366}.btn-wa:hover{background:#1da851}
 .btn-sm{height:30px;padding:0 12px;font-size:12px}
 .slot-header{font-size:11px;font-weight:600;color:var(--text2);text-align:center;padding:7px;background:var(--bg);border-radius:var(--radius-sm);letter-spacing:0.5px;text-transform:uppercase}
+.entry-grid-head{display:grid;grid-template-columns:180px 70px repeat(3,1fr);gap:8px;margin-bottom:8px}
 .item-row{display:grid;grid-template-columns:180px 70px repeat(3,1fr);gap:8px;align-items:center;margin-bottom:4px}
 .item-kg-row{display:grid;grid-template-columns:180px 70px repeat(3,1fr);gap:8px;align-items:center;margin-bottom:8px}
 .item-label{font-size:13px;font-weight:500;color:var(--text);padding:0 4px}
@@ -96,11 +97,51 @@ table.report tr.zero td{color:var(--text3)}
 /* Notification alert badge */
 .notif-badge{display:inline-flex;align-items:center;gap:5px;background:var(--red-bg);color:var(--red);border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600}
 @media(max-width:640px){
+  .app{padding:1rem 0.75rem 1.5rem}
+  .card{padding:1rem}
+  .brand{font-size:24px}
+  .subtitle{font-size:12px;line-height:1.5}
+  select,input[type=date],input[type=number],input[type=text],input[type=tel],.btn{height:46px;font-size:15px}
+  .btn{padding:0 14px}
   .metric-grid{grid-template-columns:repeat(2,1fr)}
-  .item-row,.item-kg-row{grid-template-columns:120px 60px repeat(3,1fr);gap:5px;font-size:12px}
+  .entry-form-meta{grid-template-columns:1fr!important}
+  .entry-actions{flex-direction:column}
+  .entry-actions .btn{width:100%;justify-content:center}
+  .entry-grid-head{
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin-bottom:10px
+  }
+  .entry-grid-head>div:nth-child(-n+2){display:none}
+  .item-row{
+    grid-template-columns:repeat(3,1fr);
+    grid-template-areas:
+      "label label uom"
+      "s1 s2 s3";
+    gap:8px;
+    margin-bottom:8px;
+    padding:12px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    border-radius:var(--radius-sm)
+  }
+  .item-row>.item-label{grid-area:label;padding:0;font-size:15px}
+  .item-row>div:nth-child(2){grid-area:uom}
+  .item-row>input:nth-child(3){grid-area:s1}
+  .item-row>input:nth-child(4){grid-area:s2}
+  .item-row>input:nth-child(5){grid-area:s3}
+  .item-kg-row{
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+    margin:0 0 12px;
+    padding:0 12px
+  }
+  .item-kg-row>div:nth-child(-n+2){display:none}
+  .kg-preview{font-size:12px;min-height:18px}
   .tabs .tab{font-size:11px;padding:6px 6px}
   .im-row,.im-head{grid-template-columns:1fr 60px 70px 80px 30px;font-size:12px}
   .phone-row{grid-template-columns:90px 1fr auto}
+  .report-title-bar{flex-direction:column;align-items:flex-start;gap:4px}
 }
 </style>
 </head>
@@ -146,7 +187,7 @@ table.report tr.zero td{color:var(--text3)}
   <div id="entry" class="section active">
     <div class="card">
       <div class="card-title">Branch &amp; Date</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="entry-form-meta" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div><label>Branch Name</label><select id="branch-select"><option value="">— Select branch —</option></select></div>
         <div><label>Date</label><input type="date" id="entry-date"></div>
       </div>
@@ -156,7 +197,7 @@ table.report tr.zero td{color:var(--text3)}
         <div class="card-title" style="margin-bottom:0">Stock Quantities</div>
         <span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:99px;font-weight:600">Enter in CVR / BOX — auto converts to KG</span>
       </div>
-      <div style="display:grid;grid-template-columns:180px 70px repeat(3,1fr);gap:8px;margin-bottom:8px">
+      <div class="entry-grid-head">
         <div></div><div class="slot-header" style="font-size:10px">UOM</div>
         <div class="slot-header">1:00 PM</div>
         <div class="slot-header">7:00 PM</div>
@@ -164,7 +205,7 @@ table.report tr.zero td{color:var(--text3)}
       </div>
       <div id="items-container"></div>
     </div>
-    <div style="display:flex;gap:10px;justify-content:flex-end">
+    <div class="entry-actions" style="display:flex;gap:10px;justify-content:flex-end">
       <button class="btn" onclick="clearForm()">Clear</button>
       <button class="btn btn-primary" onclick="submitEntry()" id="submit-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -424,6 +465,37 @@ function today(){return new Date().toISOString().slice(0,10)}
 function fmtDate(d){return d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'-'}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function setSyncStatus(state,text){document.getElementById('sync-dot').className='sync-dot '+state;document.getElementById('sync-text').textContent=text;}
+function normText(v){return String(v||'').trim();}
+function normalizeDateValue(v){
+  const raw=normText(v);
+  if(!raw)return '';
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw))return raw;
+  if(/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(raw)){
+    const [d,m,y]=raw.split('/');
+    return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+  }
+  const parsed=new Date(raw);
+  if(Number.isNaN(parsed.getTime()))return raw;
+  const y=parsed.getFullYear();
+  const m=String(parsed.getMonth()+1).padStart(2,'0');
+  const d=String(parsed.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function normalizeItemId(value){
+  const raw=normText(value);
+  if(!raw)return '';
+  const byId=ITEMS.find(item=>item.id.toLowerCase()===raw.toLowerCase());
+  if(byId)return byId.id;
+  const byLabel=ITEMS.find(item=>item.label.toLowerCase()===raw.toLowerCase());
+  if(byLabel)return byLabel.id;
+  const compact=raw.toLowerCase().replace(/[^a-z0-9]+/g,'');
+  const fuzzy=ITEMS.find(item=>{
+    const idKey=item.id.toLowerCase().replace(/[^a-z0-9]+/g,'');
+    const labelKey=item.label.toLowerCase().replace(/[^a-z0-9]+/g,'');
+    return compact===idKey||compact===labelKey;
+  });
+  return fuzzy?fuzzy.id:raw;
+}
 
 // ============================================================
 // SHEET URL
@@ -456,16 +528,22 @@ function testConnection(){
 function parseSheetData(rows){
   if(!rows||rows.length<2)return;
   const newEntries=[];
-  for(let i=1;i<rows.length;i++){
+  let importedRows=0;
+  for(let i=0;i<rows.length;i++){
     const r=rows[i];if(!r[0]||!r[1]||!r[2])continue;
-    const branch=String(r[0]),date=String(r[1]),itemId=String(r[2]);
+    const branch=normText(r[0]);
+    const date=normalizeDateValue(r[1]);
+    const itemId=normalizeItemId(r[2]);
+    const isHeader=branch.toLowerCase()==='branch'&&date.toLowerCase()==='date';
+    if(isHeader)continue;
     const s1=parseFloat(r[3])||0,s2=parseFloat(r[4])||0,s3=parseFloat(r[5])||0;
     let entry=newEntries.find(e=>e.branch===branch&&e.date===date);
     if(!entry){entry={branch,date,items:{}};newEntries.push(entry);}
     entry.items[itemId]={s1,s2,s3};
+    importedRows++;
   }
   entries=newEntries;save();setSyncStatus('ok','Synced ✓');
-  showToast('Loaded '+Math.max(0,rows.length-1)+' records from Sheet');
+  showToast('Loaded '+importedRows+' records from Sheet');
 }
 
 function loadFromSheet(){
@@ -878,8 +956,8 @@ function renderReport(){
     }).join('');
     wrap.innerHTML=`
       <div class="report-title-bar">
-        <span class="report-title">Stock Report — ${item.label}</span>
-        <span style="font-size:12px;color:var(--text2)">${fmtDate(date)} &nbsp;·&nbsp; <strong>${sl}</strong></span>
+        <span class="report-title">${sl}</span>
+        <span style="font-size:12px;color:var(--text2)">${fmtDate(date)}</span>
       </div>
       <div style="overflow-x:auto"><table class="report">
         <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (KG)</th></tr></thead>
@@ -903,7 +981,7 @@ function renderReport(){
       }).join('');
       wrap.innerHTML=`
         <div class="report-title-bar">
-          <span class="report-title">${item.label} — ${getReportSlotLabel(slot.key)}</span>
+          <span class="report-title">${getReportSlotLabel(slot.key)}</span>
           <span style="font-size:12px;color:var(--text2)">${fmtDate(date)}</span>
         </div>
         <div style="overflow-x:auto"><table class="report">
@@ -1074,3 +1152,4 @@ buildForm();
 </script>
 </body>
 </html>
+
