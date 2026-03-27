@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TGF Stock Entry System</title>
+<title>Item Stock Entry System</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -38,7 +38,7 @@ body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--shadow)}
 .card-title{font-size:14px;font-weight:600;margin-bottom:14px;color:var(--text)}
 label{font-size:12px;color:var(--text2);font-weight:500;display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:0.4px}
-select,input[type=date],input[type=number],input[type=text]{
+select,input[type=date],input[type=number],input[type=text],input[type=tel]{
   height:38px;padding:0 11px;border:1px solid var(--border);border-radius:var(--radius-sm);
   background:var(--card);color:var(--text);font-size:13px;width:100%;
   font-family:'DM Sans',sans-serif;transition:border-color 0.15s;outline:none}
@@ -85,16 +85,22 @@ table.report tr.zero td{color:var(--text3)}
 .im-head{display:grid;grid-template-columns:1fr 80px 90px 100px 36px;gap:8px;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.4px;padding-bottom:8px;border-bottom:2px solid var(--border2)}
 .del-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:var(--radius-sm);background:none;cursor:pointer;color:var(--red);font-size:18px;display:flex;align-items:center;justify-content:center;transition:background 0.15s;line-height:1}
 .del-btn:hover{background:var(--red-bg)}
-/* Report PNG area */
+/* Report PNG */
 #report-capture{background:#fff;padding:0}
-.rep-hdr{background:#1a1917;color:#fff;padding:16px 20px 13px;margin-bottom:0}
+.rep-hdr{background:#1a1917;color:#fff;padding:16px 20px 13px}
 .rep-hdr-title{font-size:17px;font-weight:700;letter-spacing:-0.3px}
 .rep-hdr-sub{font-size:12px;opacity:0.7;margin-top:4px}
+/* Phone contacts table */
+.phone-row{display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
+.phone-row:last-child{border-bottom:none}
+/* Notification alert badge */
+.notif-badge{display:inline-flex;align-items:center;gap:5px;background:var(--red-bg);color:var(--red);border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600}
 @media(max-width:640px){
   .metric-grid{grid-template-columns:repeat(2,1fr)}
   .item-row,.item-kg-row{grid-template-columns:120px 60px repeat(3,1fr);gap:5px;font-size:12px}
-  .tabs .tab{font-size:11px;padding:6px 7px}
+  .tabs .tab{font-size:11px;padding:6px 6px}
   .im-row,.im-head{grid-template-columns:1fr 60px 70px 80px 30px;font-size:12px}
+  .phone-row{grid-template-columns:90px 1fr auto}
 }
 </style>
 </head>
@@ -104,13 +110,19 @@ table.report tr.zero td{color:var(--text3)}
   <div class="header">
     <div class="header-top">
       <div>
-        <div class="brand">TGF Stock Entry <span>System</span></div>
-        <div class="subtitle">Entry times: 1:00 PM · 7:00 PM · 10:00 PM</div>
+        <div class="brand">Item Stock Entry <span>System</span></div>
+        <div class="subtitle">Entry times: 1:00 PM · 7:00 PM · 10:30 PM &nbsp;|&nbsp; Reports: 2 PM · 8 PM · 11 PM</div>
       </div>
-      <div class="sync-status" id="sync-status">
-        <div class="sync-dot syncing" id="sync-dot"></div>
-        <span id="sync-text">Connecting…</span>
-        <span id="pending-badge" style="display:none;background:#f59e0b;color:#fff;border-radius:99px;padding:1px 7px;font-size:11px;font-weight:600;margin-left:4px"></span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+        <div class="sync-status" id="sync-status">
+          <div class="sync-dot syncing" id="sync-dot"></div>
+          <span id="sync-text">Connecting…</span>
+          <span id="pending-badge" style="display:none;background:#f59e0b;color:#fff;border-radius:99px;padding:1px 7px;font-size:11px;font-weight:600;margin-left:4px"></span>
+        </div>
+        <div id="notif-status" style="display:none" class="notif-badge">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span id="notif-text">Checking…</span>
+        </div>
       </div>
     </div>
   </div>
@@ -126,6 +138,7 @@ table.report tr.zero td{color:var(--text3)}
     <button class="tab" onclick="switchTab('finalreport')">Stock Report</button>
     <button class="tab" onclick="switchTab('missing')">Missing</button>
     <button class="tab" onclick="switchTab('items')">⚙ Items</button>
+    <button class="tab" onclick="switchTab('contacts')">📞 Contacts</button>
     <button class="tab" onclick="switchTab('settings')">Settings</button>
   </div>
 
@@ -141,13 +154,13 @@ table.report tr.zero td{color:var(--text3)}
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin-bottom:0">Stock Quantities</div>
-        <span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:99px;font-weight:600">Enter in CVR / BOX — system converts to KG automatically</span>
+        <span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:99px;font-weight:600">Enter in CVR / BOX — auto converts to KG</span>
       </div>
       <div style="display:grid;grid-template-columns:180px 70px repeat(3,1fr);gap:8px;margin-bottom:8px">
         <div></div><div class="slot-header" style="font-size:10px">UOM</div>
         <div class="slot-header">1:00 PM</div>
         <div class="slot-header">7:00 PM</div>
-        <div class="slot-header">10:00 PM</div>
+        <div class="slot-header">10:30 PM</div>
       </div>
       <div id="items-container"></div>
     </div>
@@ -169,7 +182,7 @@ table.report tr.zero td{color:var(--text3)}
       <div><label>Time Slot</label>
         <select id="dash-slot" onchange="renderDashboard()">
           <option value="all">All Slots</option>
-          <option value="s1">1:00 PM</option><option value="s2">7:00 PM</option><option value="s3">10:00 PM</option>
+          <option value="s1">1:00 PM</option><option value="s2">7:00 PM</option><option value="s3">10:30 PM</option>
         </select>
       </div>
       <div style="display:flex;align-items:flex-end">
@@ -185,13 +198,22 @@ table.report tr.zero td{color:var(--text3)}
 
   <!-- ===== STOCK REPORT ===== -->
   <div id="finalreport" class="section">
+    <!-- Workflow guide strip -->
+    <div style="background:var(--indigo-bg);border:1px solid #c7d2fe;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:12px;color:#3730a3;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+      <span style="font-weight:700;font-size:13px">📋 Your Daily Workflow:</span>
+      <span>① At <strong>2 PM</strong> → Load Sheet → Select <em>Item + 1:00 PM</em> → Download PNG → Send to CEO</span>
+      <span>② At <strong>8 PM</strong> → Load Sheet → Select <em>Item + 7:00 PM</em> → Download PNG → Send to CEO</span>
+      <span>③ At <strong>11 PM</strong> → Load Sheet → Select <em>Item + 10:30 PM</em> → Download PNG → Send to CEO</span>
+    </div>
     <div class="filter-bar">
       <div><label>Date</label><input type="date" id="rep-date" onchange="renderReport()"></div>
       <div><label>Item</label><select id="rep-item" onchange="renderReport()"></select></div>
-      <div><label>Time Slot</label>
+      <div><label>Report Time Slot</label>
         <select id="rep-slot" onchange="renderReport()">
           <option value="all">All Slots (Total)</option>
-          <option value="s1">1:00 PM</option><option value="s2">7:00 PM</option><option value="s3">10:00 PM</option>
+          <option value="s1">1:00 PM (for 2 PM report)</option>
+          <option value="s2">7:00 PM (for 8 PM report)</option>
+          <option value="s3">10:30 PM (for 11 PM report)</option>
         </select>
       </div>
       <div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap">
@@ -206,7 +228,7 @@ table.report tr.zero td{color:var(--text3)}
         </button>
       </div>
     </div>
-    <div id="rep-status" style="font-size:13px;padding:10px 14px;background:var(--yellow-bg);color:var(--yellow);border-radius:var(--radius-sm);margin-bottom:12px;display:none"></div>
+    <div id="rep-status" style="font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:12px;display:none"></div>
     <div id="report-capture"></div>
   </div>
 
@@ -214,10 +236,20 @@ table.report tr.zero td{color:var(--text3)}
   <div id="missing" class="section">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div style="font-size:15px;font-weight:600">Missing Entries</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="date" id="miss-date" style="height:34px;padding:0 10px;width:160px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderMissing()">
-        <button class="btn btn-sm" onclick="loadFromSheet()">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="miss-date" style="height:34px;padding:0 10px;width:155px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderMissing()">
+        <select id="miss-slot" style="height:34px;padding:0 10px;width:160px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderMissing()">
+          <option value="all">All Slots</option>
+          <option value="s1">1:00 PM slot</option>
+          <option value="s2">7:00 PM slot</option>
+          <option value="s3">10:30 PM slot</option>
+        </select>
+        <button class="btn btn-sm" onclick="loadFromSheet();setTimeout(renderMissing,1500)">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.42"/></svg> Refresh
+        </button>
+        <button class="btn btn-sm btn-wa" onclick="sendAllMissingWA()" id="send-all-btn">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.111.548 4.09 1.505 5.812L.057 23.012a.75.75 0 0 0 .93.93l5.2-1.448A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.809 9.809 0 0 1-5.012-1.375l-.36-.215-3.085.86.859-3.085-.215-.36A9.817 9.817 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+          WhatsApp All
         </button>
       </div>
     </div>
@@ -234,9 +266,9 @@ table.report tr.zero td{color:var(--text3)}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Save All Changes
         </button>
       </div>
-      <p style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6;background:var(--indigo-bg);padding:10px 14px;border-radius:var(--radius-sm);color:#3730a3">
-        <strong>How it works:</strong> Branches enter quantities in <strong>CVR or BOX</strong>. The system multiplies by your conversion factor to get <strong>KG</strong>, which is what gets saved to Google Sheet and shown in all reports.
-      </p>
+      <div style="font-size:13px;background:var(--indigo-bg);padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:16px;color:#3730a3;line-height:1.6">
+        <strong>How it works:</strong> Branches enter CVR/BOX → system multiplies by factor → saves as <strong>KG</strong> in Google Sheet &amp; all reports.
+      </div>
       <div class="im-head">
         <span>Item Name</span><span>Input UOM</span><span>Factor → KG</span><span>1 unit =</span><span></span>
       </div>
@@ -247,9 +279,37 @@ table.report tr.zero td{color:var(--text3)}
           <div><label>Item Name</label><input type="text" id="new-name" placeholder="e.g. Shawarma"></div>
           <div><label>UOM</label><input type="text" id="new-uom" placeholder="CVR"></div>
           <div><label>Factor (KG)</label><input type="number" id="new-factor" placeholder="4.8" step="0.01" min="0.01"></div>
-          <button class="btn btn-primary" onclick="addItem()" style="margin-top:0">+ Add</button>
+          <button class="btn btn-primary" onclick="addItem()">+ Add</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== CONTACTS ===== -->
+  <div id="contacts" class="section">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin-bottom:0">📞 Branch WhatsApp Numbers</div>
+        <button class="btn btn-primary btn-sm" onclick="saveContacts()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Save Contacts
+        </button>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+        Enter each branch's WhatsApp number. These are used to send automatic reminder messages when a branch hasn't submitted stock on time.
+        Include country code (e.g. <strong>+919876543210</strong>).
+      </p>
+      <div id="contacts-list"></div>
+    </div>
+    <div class="card" style="background:var(--green-bg);border-color:#a7f3d0">
+      <div class="card-title" style="color:var(--green)">🔔 Auto-Reminder Schedule</div>
+      <p style="font-size:13px;color:#065f46;line-height:1.8">
+        Reminders are sent automatically when a branch misses their deadline:<br>
+        &nbsp;&nbsp;• <strong>1:30 PM</strong> — reminder for the 1:00 PM entry<br>
+        &nbsp;&nbsp;• <strong>7:30 PM</strong> — reminder for the 7:00 PM entry<br>
+        &nbsp;&nbsp;• <strong>11:00 PM</strong> — reminder for the 10:30 PM entry<br><br>
+        The page must be open for auto-reminders to fire. Each branch gets one message per missed slot per day.
+        Messages open in WhatsApp Web automatically.
+      </p>
     </div>
   </div>
 
@@ -268,7 +328,7 @@ table.report tr.zero td{color:var(--text3)}
     <div class="card">
       <div class="card-title">Local Data &amp; Pending Queue</div>
       <div style="font-size:13px;color:var(--text2);margin-bottom:12px">
-        Entries are saved locally immediately. If Sheet is unreachable, they queue and retry on next load.
+        Entries are saved locally immediately. If Sheet is unreachable they queue and retry on next load.
         <span id="pending-info" style="display:block;margin-top:6px"></span>
       </div>
       <div style="display:flex;gap:10px;flex-wrap:wrap">
@@ -282,7 +342,7 @@ table.report tr.zero td{color:var(--text3)}
     <div class="card">
       <div class="card-title">📋 Apps Script Code</div>
       <div style="font-size:13px;color:var(--text2);line-height:1.8">
-        <p>Sheet headers: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px">Branch | Date | Item | S1_1PM_KG | S2_7PM_KG | S3_10PM_KG | Timestamp</code></p>
+        <p>Sheet headers: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px">Branch | Date | Item | S1_1PM_KG | S2_7PM_KG | S3_1030PM_KG | Timestamp</code></p>
         <pre style="background:var(--bg);padding:10px 14px;border-radius:var(--radius-sm);margin:10px 0;font-size:11.5px;font-family:'DM Mono',monospace;overflow-x:auto;line-height:1.6">function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = JSON.parse(e.postData.contents);
@@ -308,7 +368,7 @@ function doGet(e) {
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script>
 // ============================================================
-// DEFAULT ITEMS  (editable from Items tab, saved to localStorage)
+// CONFIGURATION
 // ============================================================
 const DEFAULT_ITEMS=[
   {id:"alfaham",      label:"Alfaham",             uom:"CVR", factor:4.8},
@@ -319,34 +379,41 @@ const DEFAULT_ITEMS=[
   {id:"tandoori_ball",label:"Tandoori Ball 125g",  uom:"BOX", factor:3.75},
   {id:"parota_ball",  label:"Parota Ball 125g",    uom:"BOX", factor:4.5}
 ];
-
 const BRANCHES=["KRM","EC-KTR","KTR","INTL","HE","DVH","KH","BFD","KGL","MAJ","K-BEL","RJN","ARK","KNK","INDR","HSR","JYN","RTN","MDR","MSQ","K-KLN","K-MDP","K-SIR","CST","K-BNK","K-ECT","VSN","MYS","VJN","K-RRN","K-YLK","KLR","HSN","NXS","ORN","SLG","LULU","CBP","PMC","KPN","HSK"];
-const SLOTS=[{key:"s1",label:"1:00 PM"},{key:"s2",label:"7:00 PM"},{key:"s3",label:"10:00 PM"}];
-const WA_NUMBERS={};
+// Entry slots (what branches enter at) → report labels shown in PNG
+const SLOTS=[
+  {key:"s1", entryLabel:"1:00 PM",  reportLabel:"2:00 PM"},
+  {key:"s2", entryLabel:"7:00 PM",  reportLabel:"8:00 PM"},
+  {key:"s3", entryLabel:"10:30 PM", reportLabel:"11:00 PM"}
+];
+// Auto-reminder fires X minutes after entry deadline
+const REMINDER_TIMES=[
+  {slot:"s1", hour:13, minute:30},  // 1:30 PM — for 1:00 PM slot
+  {slot:"s2", hour:19, minute:30},  // 7:30 PM — for 7:00 PM slot
+  {slot:"s3", hour:23, minute:0}    // 11:00 PM — for 10:30 PM slot
+];
 const DEFAULT_SHEET_URL='https://script.google.com/macros/s/AKfycbxG1fFuECb0C6eKtcSRzdmCD7COqiynZaCALengM5tfY8T6CU55FN42Tlt4BVD9npM4/exec';
 
 // ============================================================
 // STATE
 // ============================================================
-let ITEMS=[];
-let entries=[];
-let SHEET_URL=DEFAULT_SHEET_URL;
-let pendingQueue=[];
+let ITEMS=[], entries=[], SHEET_URL=DEFAULT_SHEET_URL, pendingQueue=[];
+let PHONE_NUMBERS={};   // {branchName: "+91xxxxxxxxxx"}
+let notifiedToday={};   // {date_slot: Set of branches already notified}
 
 function loadState(){
   try{entries=JSON.parse(localStorage.getItem('tgfStock')||'[]')}catch(e){entries=[];}
   try{SHEET_URL=localStorage.getItem('tgfSheetUrl')||DEFAULT_SHEET_URL}catch(e){}
   try{pendingQueue=JSON.parse(localStorage.getItem('tgfPending')||'[]')}catch(e){pendingQueue=[];}
-  try{
-    const s=localStorage.getItem('tgfItems');
-    ITEMS=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_ITEMS));
-  }catch(e){ITEMS=JSON.parse(JSON.stringify(DEFAULT_ITEMS));}
+  try{const s=localStorage.getItem('tgfItems');ITEMS=s?JSON.parse(s):JSON.parse(JSON.stringify(DEFAULT_ITEMS));}catch(e){ITEMS=JSON.parse(JSON.stringify(DEFAULT_ITEMS));}
+  try{PHONE_NUMBERS=JSON.parse(localStorage.getItem('tgfPhones')||'{}')}catch(e){PHONE_NUMBERS={};}
+  try{notifiedToday=JSON.parse(localStorage.getItem('tgfNotified')||'{}')}catch(e){notifiedToday={};}
 }
-
 function save(){try{localStorage.setItem('tgfStock',JSON.stringify(entries))}catch(e){}}
 function savePending(){try{localStorage.setItem('tgfPending',JSON.stringify(pendingQueue))}catch(e){}}
 function saveItemsStore(){try{localStorage.setItem('tgfItems',JSON.stringify(ITEMS))}catch(e){}}
-
+function savePhones(){try{localStorage.setItem('tgfPhones',JSON.stringify(PHONE_NUMBERS))}catch(e){}}
+function saveNotified(){try{localStorage.setItem('tgfNotified',JSON.stringify(notifiedToday))}catch(e){}}
 function toKG(item,qty){return Math.round(qty*(item.factor||1)*100)/100;}
 
 window.addEventListener('beforeunload',function(ev){
@@ -378,7 +445,7 @@ function testConnection(){
       updateConfigBanner();parseSheetData(data);flushPendingQueue();updatePendingBadge();
     }else{result.innerHTML='<span style="color:var(--red)">✗ Unexpected response.</span>';setSyncStatus('error','Error');}
   }).catch(()=>{
-    result.innerHTML='<span style="color:var(--red)">✗ Could not reach URL. Check deployment: Who has access = <strong>Anyone</strong>, URL ends in /exec</span>';
+    result.innerHTML='<span style="color:var(--red)">✗ Could not reach URL. Check: Who has access = <strong>Anyone</strong>, URL ends in /exec</span>';
     setSyncStatus('error','Not connected');
   });
 }
@@ -390,16 +457,14 @@ function parseSheetData(rows){
   if(!rows||rows.length<2)return;
   const newEntries=[];
   for(let i=1;i<rows.length;i++){
-    const r=rows[i];
-    if(!r[0]||!r[1]||!r[2])continue;
+    const r=rows[i];if(!r[0]||!r[1]||!r[2])continue;
     const branch=String(r[0]),date=String(r[1]),itemId=String(r[2]);
     const s1=parseFloat(r[3])||0,s2=parseFloat(r[4])||0,s3=parseFloat(r[5])||0;
     let entry=newEntries.find(e=>e.branch===branch&&e.date===date);
     if(!entry){entry={branch,date,items:{}};newEntries.push(entry);}
-    entry.items[itemId]={s1,s2,s3}; // already KG in sheet
+    entry.items[itemId]={s1,s2,s3};
   }
-  entries=newEntries;save();
-  setSyncStatus('ok','Synced ✓');
+  entries=newEntries;save();setSyncStatus('ok','Synced ✓');
   showToast('Loaded '+Math.max(0,rows.length-1)+' records from Sheet');
 }
 
@@ -417,7 +482,7 @@ function pushToSheet(rows){
   const allRows=[...pendingQueue,...rows];
   return fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({rows:allRows}),headers:{'Content-Type':'text/plain'}})
   .then(()=>{pendingQueue=[];savePending();setSyncStatus('ok','Saved ✓');updatePendingBadge();})
-  .catch(()=>{pendingQueue.push(...rows);savePending();setSyncStatus('error','Saved locally');showToast('⚠️ Saved locally — will retry on next load');updatePendingBadge();});
+  .catch(()=>{pendingQueue.push(...rows);savePending();setSyncStatus('error','Saved locally');showToast('⚠️ Saved locally — will retry');updatePendingBadge();});
 }
 
 function updatePendingBadge(){
@@ -428,18 +493,124 @@ function updatePendingBadge(){
 
 function flushPendingQueue(){
   if(!SHEET_URL||pendingQueue.length===0)return;
-  const toSend=[...pendingQueue];
-  setSyncStatus('syncing','Retrying…');
+  const toSend=[...pendingQueue];setSyncStatus('syncing','Retrying…');
   fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({rows:toSend}),headers:{'Content-Type':'text/plain'}})
   .then(()=>{pendingQueue=[];savePending();setSyncStatus('ok','All synced ✓');showToast('✓ '+toSend.length+' pending entries synced!');updatePendingBadge();})
   .catch(()=>{setSyncStatus('error','Still offline');});
 }
 
 // ============================================================
+// AUTO REMINDER ENGINE
+// Runs every minute, fires at the set reminder times
+// Opens WhatsApp Web for branches that haven't submitted
+// ============================================================
+let reminderInterval=null;
+
+function startReminderEngine(){
+  if(reminderInterval)clearInterval(reminderInterval);
+  checkReminders(); // run once immediately
+  reminderInterval=setInterval(checkReminders,60000); // every 1 minute
+}
+
+function checkReminders(){
+  const now=new Date();
+  const h=now.getHours(), m=now.getMinutes();
+  const date=today();
+
+  REMINDER_TIMES.forEach(rt=>{
+    // Only fire in the exact minute window (±0)
+    if(h!==rt.hour||m!==rt.minute)return;
+    const key=date+'_'+rt.slot;
+    if(!notifiedToday[key])notifiedToday[key]=[];
+    const alreadySent=new Set(notifiedToday[key]);
+
+    // Find branches that have NOT submitted this slot
+    const missing=BRANCHES.filter(b=>{
+      const e=entries.find(x=>x.branch===b&&x.date===date);
+      if(!e)return true; // no entry at all
+      // Check if any item has data for this slot
+      return !ITEMS.some(item=>(e.items[item.id]||{})[rt.slot]>0);
+    });
+
+    // Build list of slots not entered for message
+    const slotObj=SLOTS.find(s=>s.key===rt.slot);
+    const slotName=slotObj?slotObj.entryLabel:rt.slot;
+
+    let sentCount=0;
+    missing.forEach(branch=>{
+      if(alreadySent.has(branch))return; // already sent today
+      const num=PHONE_NUMBERS[branch];
+      if(!num)return; // no phone — skip
+      const cleanNum=num.replace(/[^0-9+]/g,'').replace(/^\+/,'');
+      if(!cleanNum)return;
+      const msg=encodeURIComponent(
+        `Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\nPlease submit at:\n• ${slotName}\n\nThank you.`
+      );
+      // Open WhatsApp for each missing branch
+      setTimeout(()=>{window.open(`https://wa.me/${cleanNum}?text=${msg}`,'_blank');},sentCount*800);
+      notifiedToday[key].push(branch);
+      sentCount++;
+    });
+
+    if(sentCount>0){
+      saveNotified();
+      showToast(`📱 Sent ${sentCount} reminder(s) for ${slotName} slot`);
+      // Update notif badge
+      document.getElementById('notif-status').style.display='flex';
+      document.getElementById('notif-text').textContent=`${sentCount} reminders sent at ${h}:${String(m).padStart(2,'0')}`;
+    }
+  });
+}
+
+// ============================================================
+// CONTACTS TAB
+// ============================================================
+function renderContacts(){
+  const list=document.getElementById('contacts-list');
+  list.innerHTML='';
+  // Header
+  const hdr=document.createElement('div');
+  hdr.className='phone-row';
+  hdr.style.fontWeight='600';hdr.style.fontSize='11px';hdr.style.color='var(--text2)';hdr.style.textTransform='uppercase';hdr.style.letterSpacing='0.4px';
+  hdr.innerHTML='<span>Branch</span><span>WhatsApp Number</span><span style="font-size:10px">Test</span>';
+  list.appendChild(hdr);
+  BRANCHES.forEach(b=>{
+    const row=document.createElement('div');row.className='phone-row';
+    const safeId='ph_'+b.replace(/[^a-z0-9]/gi,'_');
+    row.innerHTML=`
+      <span style="font-size:13px;font-weight:500">${b}</span>
+      <input type="tel" id="${safeId}" placeholder="+91xxxxxxxxxx" value="${PHONE_NUMBERS[b]||''}" 
+        style="height:32px;font-size:13px" oninput="PHONE_NUMBERS['${b}']=this.value">
+      <button class="btn btn-sm btn-wa" onclick="testWA('${b}','${safeId}')" title="Send test message">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.111.548 4.09 1.505 5.812L.057 23.012a.75.75 0 0 0 .93.93l5.2-1.448A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.809 9.809 0 0 1-5.012-1.375l-.36-.215-3.085.86.859-3.085-.215-.36A9.817 9.817 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+        Test
+      </button>`;
+    list.appendChild(row);
+  });
+}
+
+function saveContacts(){
+  BRANCHES.forEach(b=>{
+    const safeId='ph_'+b.replace(/[^a-z0-9]/gi,'_');
+    const el=document.getElementById(safeId);
+    if(el)PHONE_NUMBERS[b]=el.value.trim();
+  });
+  savePhones();showToast('✓ Contacts saved!');
+}
+
+function testWA(branch,inputId){
+  const num=(document.getElementById(inputId)?.value||'').trim().replace(/[^0-9+]/g,'');
+  if(!num){showToast('Enter a number for '+branch+' first');return;}
+  const clean=num.startsWith('+')?num.slice(1):num;
+  const msg=encodeURIComponent(`Hi ${branch} team, this is a test message from the Item Stock Entry System. ✓`);
+  window.open(`https://wa.me/${clean}?text=${msg}`,'_blank');
+}
+
+// ============================================================
 // TABS
 // ============================================================
 function switchTab(name){
-  const tabs=['entry','dashboard','finalreport','missing','items','settings'];
+  const tabs=['entry','dashboard','finalreport','missing','items','contacts','settings'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(name).classList.add('active');
@@ -447,6 +618,7 @@ function switchTab(name){
   if(name==='finalreport')renderReport();
   if(name==='missing')renderMissing();
   if(name==='items')renderItemsManager();
+  if(name==='contacts')renderContacts();
   if(name==='settings')updatePendingInfo();
 }
 
@@ -467,6 +639,7 @@ function buildForm(){
   loadFromSheet();
   setTimeout(flushPendingQueue,2500);
   updatePendingBadge();
+  startReminderEngine();
 }
 
 function rebuildSelectOptions(){
@@ -485,13 +658,11 @@ function rebuildSelectOptions(){
 function buildEntryItems(){
   const c=document.getElementById('items-container');c.innerHTML='';
   ITEMS.forEach(item=>{
-    // Input row
     const row=document.createElement('div');row.className='item-row';
     row.innerHTML=`<div class="item-label">${item.label}</div>
       <div><div class="item-uom-badge">${item.uom}</div></div>`+
       SLOTS.map(s=>`<input type="number" min="0" step="0.01" placeholder="0" id="${item.id}_${s.key}" oninput="previewKG('${item.id}','${s.key}',this.value,${item.factor})">`).join('');
     c.appendChild(row);
-    // KG preview row
     const prev=document.createElement('div');prev.className='item-kg-row';
     prev.innerHTML=`<div style="font-size:10px;color:var(--text3);padding:0 4px">→ KG</div><div></div>`+
       SLOTS.map(s=>`<div id="${item.id}_${s.key}_kg" class="kg-preview"></div>`).join('');
@@ -514,7 +685,7 @@ function clearForm(){
 }
 
 // ============================================================
-// SUBMIT — converts CVR/BOX → KG before pushing to Sheet
+// SUBMIT
 // ============================================================
 function submitEntry(){
   const branch=document.getElementById('branch-select').value;
@@ -556,42 +727,33 @@ function renderItemsManager(){
       <input type="text" value="${item.label}" id="im_name_${idx}" style="height:32px;font-size:13px">
       <input type="text" value="${item.uom}" id="im_uom_${idx}" style="height:32px;font-size:13px;text-align:center">
       <input type="number" value="${item.factor}" id="im_factor_${idx}" step="0.01" min="0.01" style="height:32px;font-size:13px">
-      <div style="font-size:12px;color:var(--text2);text-align:center">
-        1 ${item.uom} = <strong>${item.factor} KG</strong>
-      </div>
-      <button class="del-btn" onclick="deleteItem(${idx})" title="Remove">×</button>`;
+      <div style="font-size:12px;color:var(--text2);text-align:center">1 ${item.uom} = <strong>${item.factor} KG</strong></div>
+      <button class="del-btn" onclick="deleteItem(${idx})">×</button>`;
     list.appendChild(row);
   });
 }
-
 function addItem(){
   const name=document.getElementById('new-name').value.trim();
   const uom=document.getElementById('new-uom').value.trim()||'CVR';
   const factor=parseFloat(document.getElementById('new-factor').value)||1;
   if(!name){showToast('Enter item name');return;}
-  const id='item_'+Date.now();
-  ITEMS.push({id,label:name,uom,factor});
+  ITEMS.push({id:'item_'+Date.now(),label:name,uom,factor});
   saveItemsStore();renderItemsManager();rebuildSelectOptions();buildEntryItems();
   document.getElementById('new-name').value='';document.getElementById('new-uom').value='';document.getElementById('new-factor').value='';
   showToast('✓ Item added: '+name);
 }
-
 function deleteItem(idx){
-  if(!confirm('Remove "'+ITEMS[idx].label+'"? This will not affect already-submitted data.'))return;
+  if(!confirm('Remove "'+ITEMS[idx].label+'"?'))return;
   ITEMS.splice(idx,1);saveItemsStore();renderItemsManager();rebuildSelectOptions();buildEntryItems();showToast('Item removed');
 }
-
 function saveItems(){
   ITEMS.forEach((item,idx)=>{
-    const n=document.getElementById('im_name_'+idx);
-    const u=document.getElementById('im_uom_'+idx);
-    const f=document.getElementById('im_factor_'+idx);
+    const n=document.getElementById('im_name_'+idx);const u=document.getElementById('im_uom_'+idx);const f=document.getElementById('im_factor_'+idx);
     if(n&&n.value.trim())item.label=n.value.trim();
     if(u&&u.value.trim())item.uom=u.value.trim();
     if(f&&parseFloat(f.value)>0)item.factor=parseFloat(f.value);
   });
-  saveItemsStore();renderItemsManager();rebuildSelectOptions();buildEntryItems();
-  showToast('✓ Items saved!');
+  saveItemsStore();renderItemsManager();rebuildSelectOptions();buildEntryItems();showToast('✓ Items saved!');
 }
 
 // ============================================================
@@ -615,11 +777,10 @@ function renderDashboard(){
     <div class="metric-card"><div class="metric-num" style="color:var(--red)">${missing}</div><div class="metric-label">Missing</div></div>
     <div class="metric-card"><div class="metric-num">${BRANCHES.length}</div><div class="metric-label">Total Branches</div></div>
     <div class="metric-card"><div class="metric-num">${grandTotal.toFixed(1)}</div><div class="metric-label">Total KG</div></div>`;
-  const head=document.getElementById('dash-head');
-  const body=document.getElementById('dash-body');
+  const head=document.getElementById('dash-head'),body=document.getElementById('dash-body');
   if(selItem!=='all'){
     const item=ITEMS.find(i=>i.id===selItem)||ITEMS[0];if(!item)return;
-    head.innerHTML=`<th>Branch</th>`+activeSlots.map(s=>`<th>${s.label}</th>`).join('')+`<th>Total KG</th><th>Status</th>`;
+    head.innerHTML=`<th>Branch</th>`+activeSlots.map(s=>`<th>${s.entryLabel}</th>`).join('')+`<th>Total KG</th><th>Status</th>`;
     body.innerHTML='';
     const slotTotals=activeSlots.map(()=>0);let overallTotal=0;
     BRANCHES.forEach(b=>{
@@ -637,7 +798,7 @@ function renderDashboard(){
     body.appendChild(tot);
     document.getElementById('branch-breakdown').innerHTML='';return;
   }
-  head.innerHTML=`<th>Item</th>`+activeSlots.map(s=>`<th>${s.label}</th>`).join('')+`<th>Total KG</th>`;
+  head.innerHTML=`<th>Item</th>`+activeSlots.map(s=>`<th>${s.entryLabel}</th>`).join('')+`<th>Total KG</th>`;
   body.innerHTML='';
   activeItems.forEach(item=>{
     const slotVals=activeSlots.map(s=>dayEntries.reduce((a,e)=>a+((e.items[item.id]||{})[s.key]||0),0));
@@ -647,11 +808,10 @@ function renderDashboard(){
     body.appendChild(tr);
   });
   const bb=document.getElementById('branch-breakdown');bb.innerHTML='';
-  const fbranches=selBranch==='all'?BRANCHES:[selBranch];
-  fbranches.forEach(b=>{
+  (selBranch==='all'?BRANCHES:[selBranch]).forEach(b=>{
     const e=dayEntries.find(x=>x.branch===b);if(!e)return;
     const wrap=document.createElement('div');wrap.className='card';wrap.style.marginBottom='10px';
-    let html=`<p style="font-size:14px;font-weight:600;margin-bottom:10px">${b}</p><div style="overflow-x:auto"><table class="report"><thead><tr><th>Item</th>`+activeSlots.map(s=>`<th>${s.label}</th>`).join('')+`<th>Total KG</th></tr></thead><tbody>`;
+    let html=`<p style="font-size:14px;font-weight:600;margin-bottom:10px">${b}</p><div style="overflow-x:auto"><table class="report"><thead><tr><th>Item</th>`+activeSlots.map(s=>`<th>${s.entryLabel}</th>`).join('')+`<th>Total KG</th></tr></thead><tbody>`;
     activeItems.forEach(item=>{
       const vals=activeSlots.map(s=>(e.items[item.id]||{})[s.key]||0);
       const t=vals.reduce((a,b)=>a+b,0);
@@ -662,25 +822,28 @@ function renderDashboard(){
 }
 
 // ============================================================
-// STOCK REPORT — loads fresh from Sheet then renders PNG-ready
+// STOCK REPORT — always loads from Sheet; report labels show
+// 2PM/8PM/11PM (report times, not entry times)
 // ============================================================
 function loadAndRenderReport(){
   if(!SHEET_URL){showToast('Set Sheet URL in Settings');return;}
   const status=document.getElementById('rep-status');
-  status.style.display='block';
-  status.style.background='var(--yellow-bg)';status.style.color='var(--yellow)';
+  status.style.display='block';status.style.background='var(--yellow-bg)';status.style.color='var(--yellow)';
   status.textContent='⏳ Loading latest data from Google Sheet…';
   setSyncStatus('syncing','Loading…');
   fetch(SHEET_URL).then(r=>r.json()).then(data=>{
-    parseSheetData(data);
-    renderReport();
-    status.style.display='none';
-    showToast('✓ Report loaded from Sheet');
+    parseSheetData(data);renderReport();
+    status.style.display='none';showToast('✓ Report loaded from Sheet');
   }).catch(()=>{
     status.style.background='var(--red-bg)';status.style.color='var(--red)';
-    status.textContent='⚠️ Could not load from Sheet — showing locally cached data. Data may not be current.';
+    status.textContent='⚠️ Could not load from Sheet — showing locally cached data.';
     renderReport();setSyncStatus('error','Offline');
   });
+}
+
+function getReportSlotLabel(slotKey){
+  const slot=SLOTS.find(s=>s.key===slotKey);
+  return slot?slot.reportLabel:slotKey;
 }
 
 function renderReport(){
@@ -692,18 +855,19 @@ function renderReport(){
   const capture=document.getElementById('report-capture');
   capture.innerHTML='';
 
-  // Dark header block — looks great in PNG
+  // Report label for header — shows REPORT time (2PM/8PM/11PM), not entry time
+  const reportTimeLabel=selSlot==='all'?'All Slots':getReportSlotLabel(selSlot);
+
   const hdr=document.createElement('div');
   hdr.className='rep-hdr';
-  const slotLabel=selSlot==='all'?'All Slots (Total)':(SLOTS.find(s=>s.key===selSlot)?.label||'');
   hdr.innerHTML=`<div class="rep-hdr-title">Stock Report — ${item.label}</div>
-    <div class="rep-hdr-sub">TGF &nbsp;·&nbsp; ${fmtDate(date)} &nbsp;·&nbsp; ${slotLabel}</div>`;
+    <div class="rep-hdr-sub">Item Stock Entry &nbsp;·&nbsp; ${fmtDate(date)} &nbsp;·&nbsp; ${reportTimeLabel}</div>`;
   capture.appendChild(hdr);
 
   const slotsToShow=selSlot==='all'?[null]:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
 
   slotsToShow.forEach(slotFilter=>{
-    const sl=slotFilter?slotFilter.label:'All Slots (Total)';
+    const sl=slotFilter?getReportSlotLabel(slotFilter.key):'All Slots (Total)';
     const wrap=document.createElement('div');wrap.className='report-wrap';
     let grandT=0;
     const rowsHtml=BRANCHES.map(b=>{
@@ -717,12 +881,10 @@ function renderReport(){
         <span class="report-title">Stock Report — ${item.label}</span>
         <span style="font-size:12px;color:var(--text2)">${fmtDate(date)} &nbsp;·&nbsp; <strong>${sl}</strong></span>
       </div>
-      <div style="overflow-x:auto">
-        <table class="report">
-          <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (KG)</th></tr></thead>
-          <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:14px">${grandT.toFixed(2)} KG</td></tr></tbody>
-        </table>
-      </div>`;
+      <div style="overflow-x:auto"><table class="report">
+        <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (KG)</th></tr></thead>
+        <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:14px">${grandT.toFixed(2)} KG</td></tr></tbody>
+      </table></div>`;
     capture.appendChild(wrap);
   });
 
@@ -741,15 +903,13 @@ function renderReport(){
       }).join('');
       wrap.innerHTML=`
         <div class="report-title-bar">
-          <span class="report-title">${item.label} — ${slot.label}</span>
+          <span class="report-title">${item.label} — ${getReportSlotLabel(slot.key)}</span>
           <span style="font-size:12px;color:var(--text2)">${fmtDate(date)}</span>
         </div>
-        <div style="overflow-x:auto">
-          <table class="report">
-            <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (KG)</th></tr></thead>
-            <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:14px">${grandT.toFixed(2)} KG</td></tr></tbody>
-          </table>
-        </div>`;
+        <div style="overflow-x:auto"><table class="report">
+          <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (KG)</th></tr></thead>
+          <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:14px">${grandT.toFixed(2)} KG</td></tr></tbody>
+        </table></div>`;
       capture.appendChild(wrap);
     });
   }
@@ -760,13 +920,16 @@ function renderReport(){
 // ============================================================
 function renderMissing(){
   const date=document.getElementById('miss-date').value;
-  const submitted=new Set(entries.filter(e=>e.date===date).map(e=>e.branch));
-  const missBranches=BRANCHES.filter(b=>!submitted.has(b));
-  const partial=[],ok=[];
-  submitted.forEach(b=>{
+  const selSlot=document.getElementById('miss-slot').value;
+  // Determine missing based on slot filter
+  const slotsToCheck=selSlot==='all'?SLOTS:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
+  const submittedBranches=new Set(entries.filter(e=>e.date===date).map(e=>e.branch));
+  const missBranches=[];const partial=[];const ok=[];
+  BRANCHES.forEach(b=>{
     const e=entries.find(x=>x.branch===b&&x.date===date);
-    const hasAll=e&&ITEMS.every(item=>SLOTS.some(s=>(e.items[item.id]||{})[s.key]>0));
-    hasAll?ok.push(b):partial.push(b);
+    if(!e){missBranches.push(b);return;}
+    const hasSlots=slotsToCheck.every(s=>ITEMS.some(item=>(e.items[item.id]||{})[s.key]>0));
+    hasSlots?ok.push(b):partial.push(b);
   });
   document.getElementById('miss-metrics').innerHTML=`
     <div class="metric-card"><div class="metric-num" style="color:var(--red)">${missBranches.length}</div><div class="metric-label">Not submitted</div></div>
@@ -774,21 +937,26 @@ function renderMissing(){
     <div class="metric-card"><div class="metric-num" style="color:var(--green)">${ok.length}</div><div class="metric-label">Complete</div></div>`;
   const list=document.getElementById('miss-list');list.innerHTML='';
   if(!missBranches.length&&!partial.length){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2);font-size:14px">✓ All branches submitted complete entries.</div>';return;}
+
   const makeSection=(title,branches,type)=>{
     if(!branches.length)return;
     const h=document.createElement('p');h.style.cssText='font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px;margin-top:16px;text-transform:uppercase;letter-spacing:0.4px';h.textContent=title;list.appendChild(h);
     branches.forEach(b=>{
       const div=document.createElement('div');div.className='miss-card';
-      const waId=`wa_${b.replace(/[^a-z0-9]/gi,'_')}`;
+      const waId='wa_'+b.replace(/[^a-z0-9]/gi,'_');
+      // Figure out which slots are missing
+      const e=entries.find(x=>x.branch===b&&x.date===date);
+      const missSlotLabels=slotsToCheck.filter(s=>!e||!ITEMS.some(item=>(e.items[item.id]||{})[s.key]>0)).map(s=>s.entryLabel);
       div.innerHTML=`
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span style="font-size:14px;font-weight:500">${b}</span>
           <span class="badge badge-${type==='miss'?'miss':'partial'}">${type==='miss'?'Not submitted':'Partial'}</span>
+          ${missSlotLabels.length?'<span style="font-size:11px;color:var(--text2)">Missing: '+missSlotLabels.join(', ')+'</span>':''}
         </div>
         <div style="display:flex;align-items:center;gap:8px">
-          <input type="text" placeholder="+91xxxxxxxxxx" id="${waId}" value="${WA_NUMBERS[b]||''}" style="width:150px;height:30px;font-size:13px" oninput="WA_NUMBERS['${b}']=this.value">
-          <button class="btn btn-sm btn-wa" onclick="sendWA('${b}','${date}','${waId}')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.111.548 4.09 1.505 5.812L.057 23.012a.75.75 0 0 0 .93.93l5.2-1.448A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.809 9.809 0 0 1-5.012-1.375l-.36-.215-3.085.86.859-3.085-.215-.36A9.817 9.817 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+          <input type="tel" placeholder="${PHONE_NUMBERS[b]?PHONE_NUMBERS[b]:'+91xxxxxxxxxx'}" id="${waId}" value="${PHONE_NUMBERS[b]||''}" style="width:145px;height:30px;font-size:13px" oninput="PHONE_NUMBERS['${b}']=this.value">
+          <button class="btn btn-sm btn-wa" onclick="sendWA('${b}','${date}','${waId}',${JSON.stringify(missSlotLabels)})">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.111.548 4.09 1.505 5.812L.057 23.012a.75.75 0 0 0 .93.93l5.2-1.448A11.952 11.952 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.809 9.809 0 0 1-5.012-1.375l-.36-.215-3.085.86.859-3.085-.215-.36A9.817 9.817 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
             WhatsApp
           </button>
         </div>`;
@@ -799,16 +967,44 @@ function renderMissing(){
   makeSection('Partial entries',partial,'partial');
 }
 
-function sendWA(branch,date,waId){
-  const num=document.getElementById(waId).value.trim().replace(/[^0-9+]/g,'');
+function buildWAMessage(branch,date,missSlots){
+  const slotLines=missSlots.length>0?missSlots.map(s=>`• ${s}`).join('\n'):'• All slots pending';
+  return `Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\nPlease submit at:\n${slotLines}\n\nThank you.`;
+}
+
+function sendWA(branch,date,waId,missSlots){
+  const num=(document.getElementById(waId)?.value||PHONE_NUMBERS[branch]||'').trim().replace(/[^0-9+]/g,'');
   if(!num){showToast('Enter WhatsApp number for '+branch);return;}
-  const msg=encodeURIComponent(`Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\nPlease submit at:\n• 1:00 PM\n• 7:00 PM\n• 10:00 PM\n\nThank you.`);
+  PHONE_NUMBERS[branch]=document.getElementById(waId)?.value||num;savePhones();
+  const msg=encodeURIComponent(buildWAMessage(branch,date,missSlots||[]));
   const clean=num.startsWith('+')?num.slice(1):num;
   window.open(`https://wa.me/${clean}?text=${msg}`,'_blank');
 }
 
+function sendAllMissingWA(){
+  const date=document.getElementById('miss-date').value;
+  const selSlot=document.getElementById('miss-slot').value;
+  const slotsToCheck=selSlot==='all'?SLOTS:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
+  const toSend=[];
+  BRANCHES.forEach(b=>{
+    const e=entries.find(x=>x.branch===b&&x.date===date);
+    const missSlots=slotsToCheck.filter(s=>!e||!ITEMS.some(item=>(e.items[item.id]||{})[s.key]>0)).map(s=>s.entryLabel);
+    if(missSlots.length>0&&PHONE_NUMBERS[b])toSend.push({b,missSlots});
+  });
+  if(!toSend.length){showToast('No missing branches with phone numbers');return;}
+  if(!confirm(`Send WhatsApp reminders to ${toSend.length} branch(es)?`))return;
+  toSend.forEach(({b,missSlots},i)=>{
+    const num=PHONE_NUMBERS[b].replace(/[^0-9+]/g,'').replace(/^\+/,'');
+    if(!num)return;
+    const msg=encodeURIComponent(buildWAMessage(b,date,missSlots));
+    setTimeout(()=>window.open(`https://wa.me/${num}?text=${msg}`,'_blank'),i*700);
+  });
+  showToast(`📱 Opening WhatsApp for ${toSend.length} branches…`);
+}
+
 // ============================================================
 // PRINT & DOWNLOAD PNG
+// File name: StockReport_ItemName_2PM_2026-03-27.png
 // ============================================================
 function printReport(){
   const capture=document.getElementById('report-capture');
@@ -816,40 +1012,36 @@ function printReport(){
   const win=window.open('','_blank');
   win.document.write(`<html><head><title>Stock Report</title><style>
     body{font-family:'DM Sans',Arial,sans-serif;font-size:13px;padding:20px;color:#111;background:#fff}
-    .rep-hdr{background:#1a1917;color:#fff;padding:16px 20px 13px;border-radius:6px 6px 0 0;margin-bottom:0}
+    .rep-hdr{background:#1a1917;color:#fff;padding:16px 20px 13px;border-radius:6px 6px 0 0}
     .rep-hdr-title{font-size:17px;font-weight:700}.rep-hdr-sub{font-size:12px;opacity:0.7;margin-top:4px}
     .report-wrap{border:1px solid #ddd;border-radius:6px;overflow:hidden;margin-bottom:16px}
     .report-title-bar{padding:10px 14px;background:#f5f5f5;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;align-items:center}
     .report-title{font-size:13px;font-weight:600}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:7px 12px;border-bottom:1px solid #eee;text-align:left}
+    table{width:100%;border-collapse:collapse}th,td{padding:7px 12px;border-bottom:1px solid #eee;text-align:left}
     th{background:#fafafa;font-weight:600;color:#555;font-size:12px}
     tr.zero td{color:#ccc}tr.total-row td{font-weight:700;background:#f5f5f5;border-top:1px solid #ddd}
     @media print{button{display:none!important}}
   </style></head><body>`);
   win.document.write('<button onclick="window.print()" style="margin-bottom:16px;padding:8px 18px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-family:inherit">🖨 Print</button>');
-  win.document.write(capture.innerHTML);
-  win.document.write('</body></html>');win.document.close();
+  win.document.write(capture.innerHTML);win.document.write('</body></html>');win.document.close();
 }
 
 function downloadImage(){
   const capture=document.getElementById('report-capture');
-  if(!capture.innerHTML.trim()){showToast('Click "Load from Sheet" first, then download');return;}
+  if(!capture.innerHTML.trim()){showToast('Click "Load from Sheet" first');return;}
   const btn=document.getElementById('dl-btn');
   btn.textContent='Generating…';btn.disabled=true;
-  const origBg=capture.style.background;
-  capture.style.background='#ffffff';
-  html2canvas(capture,{
-    backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false,
-    allowTaint:true
-  }).then(canvas=>{
+  const origBg=capture.style.background;capture.style.background='#ffffff';
+  html2canvas(capture,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false,allowTaint:true}).then(canvas=>{
     const link=document.createElement('a');
     const date=document.getElementById('rep-date').value||today();
     const itemEl=document.getElementById('rep-item');
     const itemName=(itemEl.options[itemEl.selectedIndex]?.text||'report').replace(/[^a-zA-Z0-9]/g,'_');
+    // Use REPORT time in filename (2PM/8PM/11PM)
     const slotEl=document.getElementById('rep-slot');
-    const slotName=(slotEl.options[slotEl.selectedIndex]?.text||'All').replace(/[^a-zA-Z0-9]/g,'_');
-    link.download=`StockReport_${itemName}_${slotName}_${date}.png`;
+    const slotKey=slotEl.value;
+    const slotLabel=slotKey==='all'?'AllSlots':getReportSlotLabel(slotKey).replace(/[^a-zA-Z0-9]/g,'');
+    link.download=`StockReport_${itemName}_${slotLabel}_${date}.png`;
     link.href=canvas.toDataURL('image/png');
     link.click();
     capture.style.background=origBg;
@@ -867,15 +1059,9 @@ function downloadImage(){
 // ============================================================
 function updatePendingInfo(){
   const el=document.getElementById('pending-info');if(!el)return;
-  if(pendingQueue.length>0){
-    el.innerHTML='⚠️ <strong>'+pendingQueue.length+' row(s)</strong> queued — not yet synced to Sheet.';
-    el.style.color='var(--yellow)';
-  }else{
-    el.innerHTML='✓ All entries are synced to Google Sheet.';
-    el.style.color='var(--green)';
-  }
+  if(pendingQueue.length>0){el.innerHTML='⚠️ <strong>'+pendingQueue.length+' row(s)</strong> queued — not yet synced to Sheet.';el.style.color='var(--yellow)';}
+  else{el.innerHTML='✓ All entries are synced to Google Sheet.';el.style.color='var(--green)';}
 }
-
 function clearLocalData(){
   if(!confirm('Clear all locally stored data?\n\nGoogle Sheet is NOT affected.\nPending (unsynced) entries will be lost.'))return;
   entries=[];pendingQueue=[];save();savePending();updatePendingBadge();showToast('Local data cleared');
