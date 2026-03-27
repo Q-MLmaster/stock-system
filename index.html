@@ -87,7 +87,7 @@ table.report tr.zero td{color:var(--text3)}
 .del-btn{width:32px;height:32px;border:1px solid var(--border);border-radius:var(--radius-sm);background:none;cursor:pointer;color:var(--red);font-size:18px;display:flex;align-items:center;justify-content:center;transition:background 0.15s;line-height:1}
 .del-btn:hover{background:var(--red-bg)}
 /* Report PNG */
-#report-capture{background:#fff;padding:0}
+#report-capture{background:#fff;padding:0;max-width:420px;width:100%;margin:0 auto}
 .rep-hdr{background:#1a1917;color:#fff;padding:16px 20px 13px}
 .rep-hdr-title{font-size:17px;font-weight:700;letter-spacing:-0.3px}
 .rep-hdr-sub{font-size:12px;opacity:0.7;margin-top:4px}
@@ -466,6 +466,15 @@ function fmtDate(d){return d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
 function setSyncStatus(state,text){document.getElementById('sync-dot').className='sync-dot '+state;document.getElementById('sync-text').textContent=text;}
 function normText(v){return String(v||'').trim();}
+function getMissingSlotLabels(entry,slotsToCheck){
+  return slotsToCheck.filter(s=>!entry||!ITEMS.some(item=>(entry.items[item.id]||{})[s.key]>0)).map(s=>s.entryLabel);
+}
+function buildWAMessage(branch,date,missSlots){
+  const slots=Array.isArray(missSlots)&&missSlots.length?missSlots:['All slots'];
+  const intro=slots.length===1?'Please submit at:':'Please submit at these times:';
+  const slotLines=slots.map(s=>`- ${s}`).join('\n');
+  return `Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\n${intro}\n${slotLines}\n\nThank you.`;
+}
 function normalizeDateValue(v){
   const raw=normText(v);
   if(!raw)return '';
@@ -1143,6 +1152,117 @@ function updatePendingInfo(){
 function clearLocalData(){
   if(!confirm('Clear all locally stored data?\n\nGoogle Sheet is NOT affected.\nPending (unsynced) entries will be lost.'))return;
   entries=[];pendingQueue=[];save();savePending();updatePendingBadge();showToast('Local data cleared');
+}
+
+// ============================================================
+// OVERRIDES
+// Keeps WhatsApp messages specific to the missing slots and
+// keeps downloaded PNG size compact.
+// ============================================================
+function buildWAMessage(branch,date,missSlots){
+  const slots=Array.isArray(missSlots)&&missSlots.length?missSlots:['All slots'];
+  const intro=slots.length===1?'Please submit at:':'Please submit at these times:';
+  const slotLines=slots.map(s=>`- ${s}`).join('\n');
+  return `Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\n${intro}\n${slotLines}\n\nThank you.`;
+}
+
+function checkReminders(){
+  const now=new Date();
+  const h=now.getHours(), m=now.getMinutes();
+  const date=today();
+
+  REMINDER_TIMES.forEach(rt=>{
+    if(h!==rt.hour||m!==rt.minute)return;
+    const key=date+'_'+rt.slot;
+    if(!notifiedToday[key])notifiedToday[key]=[];
+    const alreadySent=new Set(notifiedToday[key]);
+    const missing=BRANCHES.filter(b=>{
+      const e=entries.find(x=>x.branch===b&&x.date===date);
+      if(!e)return true;
+      return !ITEMS.some(item=>(e.items[item.id]||{})[rt.slot]>0);
+    });
+    const slotObj=SLOTS.find(s=>s.key===rt.slot);
+    const slotName=slotObj?slotObj.entryLabel:rt.slot;
+
+    let sentCount=0;
+    missing.forEach(branch=>{
+      if(alreadySent.has(branch))return;
+      const num=PHONE_NUMBERS[branch];
+      if(!num)return;
+      const cleanNum=num.replace(/[^0-9+]/g,'').replace(/^\+/,'');
+      if(!cleanNum)return;
+      const msg=encodeURIComponent(buildWAMessage(branch,date,[slotName]));
+      setTimeout(()=>{window.open(`https://wa.me/${cleanNum}?text=${msg}`,'_blank');},sentCount*800);
+      notifiedToday[key].push(branch);
+      sentCount++;
+    });
+
+    if(sentCount>0){
+      saveNotified();
+      showToast(`Sent ${sentCount} reminder(s) for ${slotName} slot`);
+      document.getElementById('notif-status').style.display='flex';
+      document.getElementById('notif-text').textContent=`${sentCount} reminders sent at ${h}:${String(m).padStart(2,'0')}`;
+    }
+  });
+}
+
+function sendAllMissingWA(){
+  const date=document.getElementById('miss-date').value;
+  const selSlot=document.getElementById('miss-slot').value;
+  const slotsToCheck=selSlot==='all'?SLOTS:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
+  const toSend=[];
+  BRANCHES.forEach(b=>{
+    const e=entries.find(x=>x.branch===b&&x.date===date);
+    const missSlots=getMissingSlotLabels(e,slotsToCheck);
+    if(missSlots.length>0&&PHONE_NUMBERS[b])toSend.push({b,missSlots});
+  });
+  if(!toSend.length){showToast('No missing branches with phone numbers');return;}
+  if(!confirm(`Send WhatsApp reminders to ${toSend.length} branch(es)?`))return;
+
+  let opened=0;
+  toSend.forEach(({b,missSlots})=>{
+    const num=PHONE_NUMBERS[b].replace(/[^0-9+]/g,'').replace(/^\+/,'');
+    if(!num)return;
+    const win=window.open('about:blank','_blank');
+    if(!win)return;
+    win.location.href=`https://wa.me/${num}?text=${encodeURIComponent(buildWAMessage(b,date,missSlots))}`;
+    opened++;
+  });
+
+  if(opened===0){
+    showToast('Browser blocked the WhatsApp tabs. Please allow popups and try again.');
+    return;
+  }
+  showToast(`Opening WhatsApp for ${opened} branches...`);
+}
+
+function downloadImage(){
+  const capture=document.getElementById('report-capture');
+  if(!capture.innerHTML.trim()){showToast('Click "Load from Sheet" first');return;}
+  const btn=document.getElementById('dl-btn');
+  btn.textContent='Generating...';btn.disabled=true;
+  const origBg=capture.style.background;capture.style.background='#ffffff';
+  html2canvas(capture,{backgroundColor:'#ffffff',scale:1.2,useCORS:true,logging:false,allowTaint:true}).then(canvas=>{
+    const link=document.createElement('a');
+    const date=document.getElementById('rep-date').value||today();
+    const itemEl=document.getElementById('rep-item');
+    const itemName=(itemEl.options[itemEl.selectedIndex]?.text||'report').replace(/[^a-zA-Z0-9]/g,'_');
+    const slotEl=document.getElementById('rep-slot');
+    const slotKey=slotEl.value;
+    const slotLabel=slotKey==='all'?'AllSlots':getReportSlotLabel(slotKey).replace(/[^a-zA-Z0-9]/g,'');
+    link.download=`StockReport_${itemName}_${slotLabel}_${date}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    capture.style.background=origBg;
+    btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PNG';
+    btn.disabled=false;
+    showToast('PNG downloaded');
+  }).catch(()=>{
+    capture.style.background=origBg;
+    showToast('Download failed - try Print instead');
+    btn.innerHTML='Download PNG';
+    btn.disabled=false;
+  });
 }
 
 // ============================================================
