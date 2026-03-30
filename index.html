@@ -94,6 +94,8 @@ table.report tr.zero td{color:var(--text3)}
 /* Phone contacts table */
 .phone-row{display:grid;grid-template-columns:110px 1fr auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)}
 .phone-row:last-child{border-bottom:none}
+.search-input{height:34px;padding:0 10px;width:190px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px}
+.download-card{background:#fff;padding:0;max-width:520px;width:100%;margin:0 auto}
 /* Notification alert badge */
 .notif-badge{display:inline-flex;align-items:center;gap:5px;background:var(--red-bg);color:var(--red);border-radius:99px;padding:3px 10px;font-size:11px;font-weight:600}
 @media(max-width:640px){
@@ -152,17 +154,17 @@ table.report tr.zero td{color:var(--text3)}
     <div class="header-top">
       <div>
         <div class="brand">Item Stock Entry <span>System</span></div>
-        <div class="subtitle">Entry times: 1:00 PM · 7:00 PM · 10:30 PM &nbsp;|&nbsp; Reports: 2 PM · 8 PM · 11 PM</div>
+        <div class="subtitle">Entry times: 1:00 PM · 7:00 PM · 10:30 PM</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
         <div class="sync-status" id="sync-status">
           <div class="sync-dot syncing" id="sync-dot"></div>
-          <span id="sync-text">Connecting…</span>
+          <span id="sync-text">Connecting...</span>
           <span id="pending-badge" style="display:none;background:#f59e0b;color:#fff;border-radius:99px;padding:1px 7px;font-size:11px;font-weight:600;margin-left:4px"></span>
         </div>
         <div id="notif-status" style="display:none" class="notif-badge">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span id="notif-text">Checking…</span>
+          <span id="notif-text">Checking...</span>
         </div>
       </div>
     </div>
@@ -170,7 +172,7 @@ table.report tr.zero td{color:var(--text3)}
 
   <div class="config-banner" id="config-banner" style="display:none">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-    <div><strong>Setup required</strong> — Go to Settings tab and enter your Apps Script URL.</div>
+    <div><strong>Setup required</strong> â€” Go to Settings tab and enter your Apps Script URL.</div>
   </div>
 
   <div class="tabs">
@@ -178,8 +180,9 @@ table.report tr.zero td{color:var(--text3)}
     <button class="tab" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
     <button class="tab" data-tab="finalreport" onclick="switchTab('finalreport')">Stock Report</button>
     <button class="tab" data-tab="missing" onclick="switchTab('missing')">Missing</button>
-    <button class="tab" onclick="switchTab('items')">⚙ Items</button>
-    <button class="tab" onclick="switchTab('contacts')">📞 Contacts</button>
+    <button class="tab" data-tab="sizelist" onclick="switchTab('sizelist')">Missing List</button>
+    <button class="tab" onclick="switchTab('items')">Items</button>
+    <button class="tab" onclick="switchTab('contacts')">Contacts</button>
     <button class="tab" data-tab="settings" onclick="switchTab('settings')">Settings</button>
   </div>
 
@@ -188,14 +191,14 @@ table.report tr.zero td{color:var(--text3)}
     <div class="card">
       <div class="card-title">Branch &amp; Date</div>
       <div class="entry-form-meta" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div><label>Branch Name</label><select id="branch-select"><option value="">— Select branch —</option></select></div>
+        <div><label>Branch Name</label><select id="branch-select"><option value="">Select branch</option></select></div>
         <div><label>Date</label><input type="date" id="entry-date"></div>
       </div>
     </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin-bottom:0">Stock Quantities</div>
-        <span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:99px;font-weight:600">Enter in CVR / BOX — auto converts to KG</span>
+        <span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:99px;font-weight:600">Enter in CVR / BOX - auto converts to KG</span>
       </div>
       <div class="entry-grid-head">
         <div></div><div class="slot-header" style="font-size:10px">UOM</div>
@@ -241,10 +244,10 @@ table.report tr.zero td{color:var(--text3)}
   <div id="finalreport" class="section">
     <!-- Workflow guide strip -->
     <div style="background:var(--indigo-bg);border:1px solid #c7d2fe;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:12px;color:#3730a3;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-      <span style="font-weight:700;font-size:13px">📋 Your Daily Workflow:</span>
-      <span>① At <strong>2 PM</strong> → Load Sheet → Select <em>Item + 1:00 PM</em> → Download PNG → Send to CEO</span>
-      <span>② At <strong>8 PM</strong> → Load Sheet → Select <em>Item + 7:00 PM</em> → Download PNG → Send to CEO</span>
-      <span>③ At <strong>11 PM</strong> → Load Sheet → Select <em>Item + 10:30 PM</em> → Download PNG → Send to CEO</span>
+      <span style="font-weight:700;font-size:13px">ðŸ“‹ Your Daily Workflow:</span>
+      <span>â‘  At <strong>2 PM</strong> â†’ Load Sheet â†’ Select <em>Item + 1:00 PM</em> â†’ Download PNG â†’ Send to CEO</span>
+      <span>â‘¡ At <strong>8 PM</strong> â†’ Load Sheet â†’ Select <em>Item + 7:00 PM</em> â†’ Download PNG â†’ Send to CEO</span>
+      <span>â‘¢ At <strong>11 PM</strong> â†’ Load Sheet â†’ Select <em>Item + 10:30 PM</em> â†’ Download PNG â†’ Send to CEO</span>
     </div>
     <div class="filter-bar">
       <div><label>Date</label><input type="date" id="rep-date" onchange="renderReport()"></div>
@@ -279,6 +282,9 @@ table.report tr.zero td{color:var(--text3)}
       <div style="font-size:15px;font-weight:600">Missing Entries</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
         <input type="date" id="miss-date" style="height:34px;padding:0 10px;width:155px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderMissing()">
+        <select id="miss-item" style="height:34px;padding:0 10px;width:180px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderMissing()">
+          <option value="all">All Items</option>
+        </select>
         <select id="miss-slot" style="height:34px;padding:0 10px;width:160px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderMissing()">
           <option value="all">All Slots</option>
           <option value="s1">1:00 PM slot</option>
@@ -298,6 +304,37 @@ table.report tr.zero td{color:var(--text3)}
     <div id="miss-list"></div>
   </div>
 
+  <!-- ===== MISSING LIST ===== -->
+  <div id="sizelist" class="section">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:15px;font-weight:600">Missing Branches List</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:4px">Download only the branches that have not entered stock for the selected filters.</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="date" id="size-date" style="height:34px;padding:0 10px;width:155px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderSizeList()">
+        <select id="size-item" style="height:34px;padding:0 10px;width:180px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderSizeList()">
+          <option value="all">All Items</option>
+        </select>
+        <select id="size-slot" style="height:34px;padding:0 10px;width:160px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--card);color:var(--text);font-size:13px" onchange="renderSizeList()">
+          <option value="all">All Slots</option>
+          <option value="s1">1:00 PM slot</option>
+          <option value="s2">7:00 PM slot</option>
+          <option value="s3">10:30 PM slot</option>
+        </select>
+        <input type="text" id="size-search" class="search-input" placeholder="Search branch name" oninput="renderSizeList()">
+        <button class="btn btn-sm" onclick="loadFromSheet();setTimeout(renderSizeList,1500)">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.42"/></svg> Refresh
+        </button>
+        <button class="btn btn-img btn-sm" onclick="downloadMissingListImage()" id="miss-list-dl-btn">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PNG
+        </button>
+      </div>
+    </div>
+    <div class="metric-grid" style="grid-template-columns:repeat(3,1fr)" id="size-metrics"></div>
+    <div id="missing-list-capture" class="download-card"></div>
+  </div>
+
   <!-- ===== ITEMS MANAGER ===== -->
   <div id="items" class="section">
     <div class="card">
@@ -308,10 +345,10 @@ table.report tr.zero td{color:var(--text3)}
         </button>
       </div>
       <div style="font-size:13px;background:var(--indigo-bg);padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:16px;color:#3730a3;line-height:1.6">
-        <strong>How it works:</strong> Branches enter CVR/BOX → system multiplies by factor → saves as <strong>KG</strong> in Google Sheet &amp; all reports.
+        <strong>How it works:</strong> Branches enter CVR/BOX â†’ system multiplies by factor â†’ saves as <strong>KG</strong> in Google Sheet &amp; all reports.
       </div>
       <div class="im-head">
-        <span>Item Name</span><span>Input UOM</span><span>Factor → KG</span><span>1 unit =</span><span></span>
+        <span>Item Name</span><span>Input UOM</span><span>Factor â†’ KG</span><span>1 unit =</span><span></span>
       </div>
       <div id="items-list"></div>
       <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border)">
@@ -330,7 +367,7 @@ table.report tr.zero td{color:var(--text3)}
   <div id="contacts" class="section">
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div class="card-title" style="margin-bottom:0">📞 Branch WhatsApp Numbers</div>
+        <div class="card-title" style="margin-bottom:0">ðŸ“ž Branch WhatsApp Numbers</div>
         <button class="btn btn-primary btn-sm" onclick="saveContacts()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Save Contacts
         </button>
@@ -342,12 +379,12 @@ table.report tr.zero td{color:var(--text3)}
       <div id="contacts-list"></div>
     </div>
     <div class="card" style="background:var(--green-bg);border-color:#a7f3d0">
-      <div class="card-title" style="color:var(--green)">🔔 Auto-Reminder Schedule</div>
+      <div class="card-title" style="color:var(--green)">ðŸ”” Auto-Reminder Schedule</div>
       <p style="font-size:13px;color:#065f46;line-height:1.8">
         Reminders are sent automatically when a branch misses their deadline:<br>
-        &nbsp;&nbsp;• <strong>1:30 PM</strong> — reminder for the 1:00 PM entry<br>
-        &nbsp;&nbsp;• <strong>7:30 PM</strong> — reminder for the 7:00 PM entry<br>
-        &nbsp;&nbsp;• <strong>11:00 PM</strong> — reminder for the 10:30 PM entry<br><br>
+        &nbsp;&nbsp;â€¢ <strong>1:30 PM</strong> â€” reminder for the 1:00 PM entry<br>
+        &nbsp;&nbsp;â€¢ <strong>7:30 PM</strong> â€” reminder for the 7:00 PM entry<br>
+        &nbsp;&nbsp;â€¢ <strong>11:00 PM</strong> â€” reminder for the 10:30 PM entry<br><br>
         The page must be open for auto-reminders to fire. Each branch gets one message per missed slot per day.
         Messages open in WhatsApp Web automatically.
       </p>
@@ -376,12 +413,12 @@ table.report tr.zero td{color:var(--text3)}
         <button class="btn" onclick="loadFromSheet()">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.42"/></svg> Pull latest from Sheet
         </button>
-        <button class="btn btn-primary btn-sm" onclick="flushPendingQueue();updatePendingInfo()">↑ Retry Pending Now</button>
+        <button class="btn btn-primary btn-sm" onclick="flushPendingQueue();updatePendingInfo()">â†‘ Retry Pending Now</button>
         <button class="btn" style="color:var(--red);border-color:var(--red)" onclick="clearLocalData()">Clear local data</button>
       </div>
     </div>
     <div class="card">
-      <div class="card-title">📋 Apps Script Code</div>
+      <div class="card-title">ðŸ“‹ Apps Script Code</div>
       <div style="font-size:13px;color:var(--text2);line-height:1.8">
         <p>Sheet headers: <code style="background:var(--bg);padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px">Branch | Date | Item | S1_1PM_KG | S2_7PM_KG | S3_1030PM_KG | Timestamp</code></p>
         <pre style="background:var(--bg);padding:10px 14px;border-radius:var(--radius-sm);margin:10px 0;font-size:11.5px;font-family:'DM Mono',monospace;overflow-x:auto;line-height:1.6">function doPost(e) {
@@ -399,7 +436,7 @@ function doGet(e) {
   output.setMimeType(ContentService.MimeType.JSON);
   return output;
 }</pre>
-        <p>Deploy: <strong>Web App · Execute as: Me · Who has access: Anyone</strong></p>
+        <p>Deploy: <strong>Web App Â· Execute as: Me Â· Who has access: Anyone</strong></p>
       </div>
     </div>
   </div>
@@ -421,7 +458,7 @@ const DEFAULT_ITEMS=[
   {id:"parota_ball",  label:"Parota Ball 125g",    uom:"BOX", factor:4.5}
 ];
 const BRANCHES=["KRM","EC-KTR","KTR","INTL","HE","DVH","KH","BFD","KGL","MAJ","K-BEL","RJN","ARK","KNK","INDR","HSR","JYN","RTN","MDR","MSQ","K-KLN","K-MDP","K-SIR","CST","K-BNK","K-ECT","VSN","MYS","VJN","K-RRN","K-YLK","KLR","HSN","NXS","ORN","SLG","LULU","CBP","PMC","KPN","HSK"];
-// Entry slots (what branches enter at) → report labels shown in PNG
+// Entry slots (what branches enter at) â†’ report labels shown in PNG
 const SLOTS=[
   {key:"s1", entryLabel:"1:00 PM",  reportLabel:"2:00 PM"},
   {key:"s2", entryLabel:"7:00 PM",  reportLabel:"8:00 PM"},
@@ -429,9 +466,9 @@ const SLOTS=[
 ];
 // Auto-reminder fires X minutes after entry deadline
 const REMINDER_TIMES=[
-  {slot:"s1", hour:13, minute:30},  // 1:30 PM — for 1:00 PM slot
-  {slot:"s2", hour:19, minute:30},  // 7:30 PM — for 7:00 PM slot
-  {slot:"s3", hour:23, minute:0}    // 11:00 PM — for 10:30 PM slot
+  {slot:"s1", hour:13, minute:30},  // 1:30 PM â€” for 1:00 PM slot
+  {slot:"s2", hour:19, minute:30},  // 7:30 PM â€” for 7:00 PM slot
+  {slot:"s3", hour:23, minute:0}    // 11:00 PM â€” for 10:30 PM slot
 ];
 const DEFAULT_SHEET_URL='https://script.google.com/macros/s/AKfycbxG1fFuECb0C6eKtcSRzdmCD7COqiynZaCALengM5tfY8T6CU55FN42Tlt4BVD9npM4/exec';
 
@@ -459,6 +496,9 @@ function saveItemsStore(){try{localStorage.setItem('tgfItems',JSON.stringify(ITE
 function savePhones(){try{localStorage.setItem('tgfPhones',JSON.stringify(PHONE_NUMBERS))}catch(e){}}
 function saveNotified(){try{localStorage.setItem('tgfNotified',JSON.stringify(notifiedToday))}catch(e){}}
 function toKG(item,qty){return Math.round(qty*(item.factor||1)*100)/100;}
+function getOutputUnit(item){
+  return (item&&item.factor===1&&item.uom)?item.uom:'KG';
+}
 
 window.addEventListener('beforeunload',function(ev){
   if(pendingQueue.length>0){const m='You have '+pendingQueue.length+' unsynced entries. Leave?';ev.preventDefault();ev.returnValue=m;return m;}
@@ -517,6 +557,20 @@ function normalizeItemId(value){
   });
   return fuzzy?fuzzy.id:raw;
 }
+function getSelectedSlots(slotValue){
+  return slotValue==='all'?SLOTS:[SLOTS.find(s=>s.key===slotValue)].filter(Boolean);
+}
+function hasStockForFilter(entry,itemId,slotKey){
+  if(!entry)return false;
+  if(itemId&&itemId!=='all')return ((entry.items[itemId]||{})[slotKey]||0)>0;
+  return ITEMS.some(item=>((entry.items[item.id]||{})[slotKey]||0)>0);
+}
+function isCompleteForFilter(entry,itemId,slotsToCheck){
+  return !!entry&&slotsToCheck.every(slot=>hasStockForFilter(entry,itemId,slot.key));
+}
+function getMissingSlotLabelsForFilter(entry,itemId,slotsToCheck){
+  return slotsToCheck.filter(slot=>!hasStockForFilter(entry,itemId,slot.key)).map(slot=>slot.entryLabel);
+}
 
 // ============================================================
 // SHEET URL
@@ -528,17 +582,17 @@ function testConnection(){
   const url=document.getElementById('sheet-url').value.trim();
   if(!url){showToast('Enter a URL first');return;}
   const result=document.getElementById('connection-result');
-  result.innerHTML='<span style="color:var(--text2)">Testing…</span>';
-  setSyncStatus('syncing','Testing…');
+  result.innerHTML='<span style="color:var(--text2)">Testingâ€¦</span>';
+  setSyncStatus('syncing','Testingâ€¦');
   fetch(url+'?test=1').then(r=>r.json()).then(data=>{
     if(Array.isArray(data)){
-      result.innerHTML='<span style="color:var(--green)">✓ Connected! Found '+Math.max(0,data.length-1)+' rows.</span>';
+      result.innerHTML='<span style="color:var(--green)">âœ“ Connected! Found '+Math.max(0,data.length-1)+' rows.</span>';
       setSyncStatus('ok','Connected');showToast('Connection successful!');
       SHEET_URL=url;localStorage.setItem('tgfSheetUrl',url);
       updateConfigBanner();parseSheetData(data);flushPendingQueue();updatePendingBadge();
-    }else{result.innerHTML='<span style="color:var(--red)">✗ Unexpected response.</span>';setSyncStatus('error','Error');}
+    }else{result.innerHTML='<span style="color:var(--red)">âœ— Unexpected response.</span>';setSyncStatus('error','Error');}
   }).catch(()=>{
-    result.innerHTML='<span style="color:var(--red)">✗ Could not reach URL. Check: Who has access = <strong>Anyone</strong>, URL ends in /exec</span>';
+    result.innerHTML='<span style="color:var(--red)">âœ— Could not reach URL. Check: Who has access = <strong>Anyone</strong>, URL ends in /exec</span>';
     setSyncStatus('error','Not connected');
   });
 }
@@ -563,25 +617,25 @@ function parseSheetData(rows){
     entry.items[itemId]={s1,s2,s3};
     importedRows++;
   }
-  entries=newEntries;save();setSyncStatus('ok','Synced ✓');
+  entries=newEntries;save();setSyncStatus('ok','Synced âœ“');
   showToast('Loaded '+importedRows+' records from Sheet');
 }
 
 function loadFromSheet(){
   if(!SHEET_URL){showToast('Set Sheet URL in Settings');return;}
-  setSyncStatus('syncing','Syncing…');
+  setSyncStatus('syncing','Syncing...');
   fetch(SHEET_URL).then(r=>r.json()).then(data=>{
-    parseSheetData(data);renderDashboard();renderReport();renderMissing();
+    parseSheetData(data);renderDashboard();renderReport();renderMissing();renderSizeList();
   }).catch(()=>{setSyncStatus('error','Sync failed');showToast('Could not load from Sheet');});
 }
 
 function pushToSheet(rows){
   if(!SHEET_URL){pendingQueue.push(...rows);savePending();return Promise.resolve();}
-  setSyncStatus('syncing','Saving…');
+  setSyncStatus('syncing','Saving...');
   const allRows=[...pendingQueue,...rows];
   return fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({rows:allRows}),headers:{'Content-Type':'text/plain'}})
-  .then(()=>{pendingQueue=[];savePending();setSyncStatus('ok','Saved ✓');updatePendingBadge();})
-  .catch(()=>{pendingQueue.push(...rows);savePending();setSyncStatus('error','Saved locally');showToast('⚠️ Saved locally — will retry');updatePendingBadge();});
+  .then(()=>{pendingQueue=[];savePending();setSyncStatus('ok','Saved OK');updatePendingBadge();})
+  .catch(()=>{pendingQueue.push(...rows);savePending();setSyncStatus('error','Saved locally');showToast('Saved locally - will retry');updatePendingBadge();});
 }
 
 function updatePendingBadge(){
@@ -592,9 +646,9 @@ function updatePendingBadge(){
 
 function flushPendingQueue(){
   if(!SHEET_URL||pendingQueue.length===0)return;
-  const toSend=[...pendingQueue];setSyncStatus('syncing','Retrying…');
+  const toSend=[...pendingQueue];setSyncStatus('syncing','Retrying...');
   fetch(SHEET_URL,{method:'POST',mode:'no-cors',body:JSON.stringify({rows:toSend}),headers:{'Content-Type':'text/plain'}})
-  .then(()=>{pendingQueue=[];savePending();setSyncStatus('ok','All synced ✓');showToast('✓ '+toSend.length+' pending entries synced!');updatePendingBadge();})
+  .then(()=>{pendingQueue=[];savePending();setSyncStatus('ok','All synced OK');showToast(toSend.length+' pending entries synced');updatePendingBadge();})
   .catch(()=>{setSyncStatus('error','Still offline');});
 }
 
@@ -617,7 +671,7 @@ function checkReminders(){
   const date=today();
 
   REMINDER_TIMES.forEach(rt=>{
-    // Only fire in the exact minute window (±0)
+    // Only fire in the exact minute window (Â±0)
     if(h!==rt.hour||m!==rt.minute)return;
     const key=date+'_'+rt.slot;
     if(!notifiedToday[key])notifiedToday[key]=[];
@@ -639,11 +693,11 @@ function checkReminders(){
     missing.forEach(branch=>{
       if(alreadySent.has(branch))return; // already sent today
       const num=PHONE_NUMBERS[branch];
-      if(!num)return; // no phone — skip
+      if(!num)return; // no phone â€” skip
       const cleanNum=num.replace(/[^0-9+]/g,'').replace(/^\+/,'');
       if(!cleanNum)return;
       const msg=encodeURIComponent(
-        `Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\nPlease submit at:\n• ${slotName}\n\nThank you.`
+        `Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\nPlease submit at:\nâ€¢ ${slotName}\n\nThank you.`
       );
       // Open WhatsApp for each missing branch
       setTimeout(()=>{window.open(`https://wa.me/${cleanNum}?text=${msg}`,'_blank');},sentCount*800);
@@ -653,7 +707,7 @@ function checkReminders(){
 
     if(sentCount>0){
       saveNotified();
-      showToast(`📱 Sent ${sentCount} reminder(s) for ${slotName} slot`);
+      showToast(`ðŸ“± Sent ${sentCount} reminder(s) for ${slotName} slot`);
       // Update notif badge
       document.getElementById('notif-status').style.display='flex';
       document.getElementById('notif-text').textContent=`${sentCount} reminders sent at ${h}:${String(m).padStart(2,'0')}`;
@@ -694,14 +748,14 @@ function saveContacts(){
     const el=document.getElementById(safeId);
     if(el)PHONE_NUMBERS[b]=el.value.trim();
   });
-  savePhones();showToast('✓ Contacts saved!');
+  savePhones();showToast('Contacts saved');
 }
 
 function testWA(branch,inputId){
   const num=(document.getElementById(inputId)?.value||'').trim().replace(/[^0-9+]/g,'');
   if(!num){showToast('Enter a number for '+branch+' first');return;}
   const clean=num.startsWith('+')?num.slice(1):num;
-  const msg=encodeURIComponent(`Hi ${branch} team, this is a test message from the Item Stock Entry System. ✓`);
+  const msg=encodeURIComponent(`Hi ${branch} team, this is a test message from the Item Stock Entry System.`);
   window.open(`https://wa.me/${clean}?text=${msg}`,'_blank');
 }
 
@@ -710,13 +764,14 @@ function testWA(branch,inputId){
 // ============================================================
 function switchTab(name){
   if(FORM_ONLY_MODE&&name!=='entry')return;
-  const tabs=['entry','dashboard','finalreport','missing','items','contacts','settings'];
+  const tabs=['entry','dashboard','finalreport','missing','sizelist','items','contacts','settings'];
   document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',tabs[i]===name));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.getElementById(name).classList.add('active');
   if(name==='dashboard')renderDashboard();
   if(name==='finalreport')renderReport();
   if(name==='missing')renderMissing();
+  if(name==='sizelist')renderSizeList();
   if(name==='items')renderItemsManager();
   if(name==='contacts')renderContacts();
   if(name==='settings')updatePendingInfo();
@@ -732,11 +787,11 @@ function buildForm(){
   applyViewMode();
   rebuildSelectOptions();
   const t=today();
-  ['entry-date','dash-date','rep-date','miss-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t});
+  ['entry-date','dash-date','rep-date','miss-date','size-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=t});
   buildEntryItems();
   document.getElementById('sheet-url').value=SHEET_URL;
   updateConfigBanner();
-  setSyncStatus('syncing','Connecting…');
+  setSyncStatus('syncing','Connecting...');
   loadFromSheet();
   setTimeout(flushPendingQueue,2500);
   updatePendingBadge();
@@ -752,6 +807,13 @@ function rebuildSelectOptions(){
   const rv=ri.value;ri.innerHTML='';
   ITEMS.forEach(it=>{const o=document.createElement('option');o.value=it.id;o.textContent=it.label;ri.appendChild(o)});
   if(rv)ri.value=rv;
+  ['miss-item','size-item'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const prev=el.value||'all';
+    el.innerHTML='<option value="all">All Items</option>';
+    ITEMS.forEach(it=>{const o=document.createElement('option');o.value=it.id;o.textContent=it.label;el.appendChild(o)});
+    el.value=ITEMS.some(it=>it.id===prev)||prev==='all'?prev:'all';
+  });
   const db=document.getElementById('dash-branch');
   if(db.options.length<=1){BRANCHES.forEach(b=>{const o=document.createElement('option');o.value=b;o.textContent=b;db.appendChild(o)});}
 }
@@ -765,7 +827,7 @@ function buildEntryItems(){
       SLOTS.map(s=>`<input type="number" min="0" step="0.01" placeholder="0" id="${item.id}_${s.key}" oninput="previewKG('${item.id}','${s.key}',this.value,${item.factor})">`).join('');
     c.appendChild(row);
     const prev=document.createElement('div');prev.className='item-kg-row';
-    prev.innerHTML=`<div style="font-size:10px;color:var(--text3);padding:0 4px">→ KG</div><div></div>`+
+    prev.innerHTML=`<div style="font-size:10px;color:var(--text3);padding:0 4px">-> KG</div><div></div>`+
       SLOTS.map(s=>`<div id="${item.id}_${s.key}_kg" class="kg-preview"></div>`).join('');
     c.appendChild(prev);
   });
@@ -774,7 +836,9 @@ function buildEntryItems(){
 function previewKG(itemId,slot,val,factor){
   const qty=parseFloat(val)||0;
   const el=document.getElementById(`${itemId}_${slot}_kg`);
-  if(el)el.textContent=qty>0?(Math.round(qty*factor*100)/100)+' KG':'';
+  const item=ITEMS.find(x=>x.id===itemId);
+  const unit=getOutputUnit(item||{factor});
+  if(el)el.textContent=qty>0?(Math.round(qty*factor*100)/100)+' '+unit:'';
 }
 
 function clearForm(){
@@ -808,11 +872,11 @@ function submitEntry(){
   if(idx>=0)entries[idx]=data;else entries.push(data);
   save();
   const btn=document.getElementById('submit-btn');
-  btn.disabled=true;btn.textContent='Saving…';
+  btn.disabled=true;btn.textContent='Saving...';
   pushToSheet(rowsToAppend).finally(()=>{
     btn.disabled=false;
     btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Submit Entry';
-    showToast('✓ Entry saved for '+branch);
+    showToast('Entry saved for '+branch);
     updatePendingBadge();clearForm();
   });
 }
@@ -828,8 +892,8 @@ function renderItemsManager(){
       <input type="text" value="${item.label}" id="im_name_${idx}" style="height:32px;font-size:13px">
       <input type="text" value="${item.uom}" id="im_uom_${idx}" style="height:32px;font-size:13px;text-align:center">
       <input type="number" value="${item.factor}" id="im_factor_${idx}" step="0.01" min="0.01" style="height:32px;font-size:13px">
-      <div style="font-size:12px;color:var(--text2);text-align:center">1 ${item.uom} = <strong>${item.factor} KG</strong></div>
-      <button class="del-btn" onclick="deleteItem(${idx})">×</button>`;
+      <div style="font-size:12px;color:var(--text2);text-align:center">1 ${item.uom} = <strong>${item.factor} ${getOutputUnit(item)}</strong></div>
+      <button class="del-btn" onclick="deleteItem(${idx})">x</button>`;
     list.appendChild(row);
   });
 }
@@ -841,7 +905,7 @@ function addItem(){
   ITEMS.push({id:'item_'+Date.now(),label:name,uom,factor});
   saveItemsStore();renderItemsManager();rebuildSelectOptions();buildEntryItems();
   document.getElementById('new-name').value='';document.getElementById('new-uom').value='';document.getElementById('new-factor').value='';
-  showToast('✓ Item added: '+name);
+  showToast('Item added: '+name);
 }
 function deleteItem(idx){
   if(!confirm('Remove "'+ITEMS[idx].label+'"?'))return;
@@ -854,7 +918,7 @@ function saveItems(){
     if(u&&u.value.trim())item.uom=u.value.trim();
     if(f&&parseFloat(f.value)>0)item.factor=parseFloat(f.value);
   });
-  saveItemsStore();renderItemsManager();rebuildSelectOptions();buildEntryItems();showToast('✓ Items saved!');
+  saveItemsStore();renderItemsManager();rebuildSelectOptions();buildEntryItems();showToast('Items saved');
 }
 
 // ============================================================
@@ -923,21 +987,21 @@ function renderDashboard(){
 }
 
 // ============================================================
-// STOCK REPORT — always loads from Sheet; report labels show
+// STOCK REPORT â€” always loads from Sheet; report labels show
 // 2PM/8PM/11PM (report times, not entry times)
 // ============================================================
 function loadAndRenderReport(){
   if(!SHEET_URL){showToast('Set Sheet URL in Settings');return;}
   const status=document.getElementById('rep-status');
   status.style.display='block';status.style.background='var(--yellow-bg)';status.style.color='var(--yellow)';
-  status.textContent='⏳ Loading latest data from Google Sheet…';
-  setSyncStatus('syncing','Loading…');
+  status.textContent='Loading latest data from Google Sheet...';
+  setSyncStatus('syncing','Loading...');
   fetch(SHEET_URL).then(r=>r.json()).then(data=>{
     parseSheetData(data);renderReport();
-    status.style.display='none';showToast('✓ Report loaded from Sheet');
+    status.style.display='none';showToast('Report loaded from Sheet');
   }).catch(()=>{
     status.style.background='var(--red-bg)';status.style.color='var(--red)';
-    status.textContent='⚠️ Could not load from Sheet — showing locally cached data.';
+    status.textContent='Could not load from Sheet - showing locally cached data.';
     renderReport();setSyncStatus('error','Offline');
   });
 }
@@ -952,17 +1016,18 @@ function renderReport(){
   const selItem=document.getElementById('rep-item').value;
   const selSlot=document.getElementById('rep-slot').value;
   const item=ITEMS.find(i=>i.id===selItem)||ITEMS[0];
+  const outputUnit=getOutputUnit(item);
   if(!item)return;
   const capture=document.getElementById('report-capture');
   capture.innerHTML='';
 
-  // Report label for header — shows REPORT time (2PM/8PM/11PM), not entry time
+  // Report label for header - shows REPORT time (2PM/8PM/11PM), not entry time
   const reportTimeLabel=selSlot==='all'?'All Slots':getReportSlotLabel(selSlot);
 
   const hdr=document.createElement('div');
   hdr.className='rep-hdr';
-  hdr.innerHTML=`<div class="rep-hdr-title">Stock Report — ${item.label}</div>
-    <div class="rep-hdr-sub">Item Stock Entry &nbsp;·&nbsp; ${fmtDate(date)} &nbsp;·&nbsp; ${reportTimeLabel}</div>`;
+  hdr.innerHTML=`<div class="rep-hdr-title">Stock Report - ${item.label}</div>
+    <div class="rep-hdr-sub">Item Stock Entry | ${fmtDate(date)} | ${reportTimeLabel}</div>`;
   capture.appendChild(hdr);
 
   const slotsToShow=selSlot==='all'?[null]:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
@@ -975,7 +1040,7 @@ function renderReport(){
       const e=entries.find(x=>x.branch===b&&x.date===date);
       const qty=slotFilter?(e?.items[item.id]||{})[slotFilter.key]||0:SLOTS.reduce((a,s)=>a+((e?.items[item.id]||{})[s.key]||0),0);
       grandT+=qty;
-      return `<tr class="${qty===0?'zero':''}"><td style="font-weight:500">${b}</td><td>KG</td><td style="text-align:right;font-family:'DM Mono',monospace">${qty>0?qty.toFixed(2):'—'}</td></tr>`;
+      return `<tr class="${qty===0?'zero':''}"><td style="font-weight:500">${b}</td><td>${outputUnit}</td><td style="text-align:right;font-family:'DM Mono',monospace">${qty>0?qty.toFixed(2):'-'}</td></tr>`;
     }).join('');
     wrap.innerHTML=`
       <div class="report-title-bar">
@@ -983,8 +1048,8 @@ function renderReport(){
         <span style="font-size:12px;color:var(--text2)">${fmtDate(date)}</span>
       </div>
       <div style="overflow-x:auto"><table class="report">
-        <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (KG)</th></tr></thead>
-        <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:14px">${grandT.toFixed(2)} KG</td></tr></tbody>
+        <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (${outputUnit})</th></tr></thead>
+        <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:14px">${grandT.toFixed(2)} ${outputUnit}</td></tr></tbody>
       </table></div>`;
     capture.appendChild(wrap);
   });
@@ -1000,7 +1065,7 @@ function renderReport(){
       const rowsHtml=BRANCHES.map(b=>{
         const e=entries.find(x=>x.branch===b&&x.date===date);
         const qty=(e?.items[item.id]||{})[slot.key]||0;grandT+=qty;
-        return `<tr class="${qty===0?'zero':''}"><td style="font-weight:500">${b}</td><td>KG</td><td style="text-align:right;font-family:'DM Mono',monospace">${qty>0?qty.toFixed(2):'—'}</td></tr>`;
+        return `<tr class="${qty===0?'zero':''}"><td style="font-weight:500">${b}</td><td>${outputUnit}</td><td style="text-align:right;font-family:'DM Mono',monospace">${qty>0?qty.toFixed(2):'-'}</td></tr>`;
       }).join('');
       wrap.innerHTML=`
         <div class="report-title-bar">
@@ -1008,8 +1073,8 @@ function renderReport(){
           <span style="font-size:12px;color:var(--text2)">${fmtDate(date)}</span>
         </div>
         <div style="overflow-x:auto"><table class="report">
-          <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (KG)</th></tr></thead>
-          <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:14px">${grandT.toFixed(2)} KG</td></tr></tbody>
+          <thead><tr><th style="width:40%">Branch</th><th style="width:20%">UOM</th><th style="width:40%;text-align:right">${item.label.toUpperCase()} (${outputUnit})</th></tr></thead>
+          <tbody>${rowsHtml}<tr class="total-row"><td colspan="2">TOTAL</td><td style="text-align:right;font-family:'DM Mono',monospace;font-size:14px">${grandT.toFixed(2)} ${outputUnit}</td></tr></tbody>
         </table></div>`;
       capture.appendChild(wrap);
     });
@@ -1021,23 +1086,21 @@ function renderReport(){
 // ============================================================
 function renderMissing(){
   const date=document.getElementById('miss-date').value;
+  const itemId=document.getElementById('miss-item').value;
   const selSlot=document.getElementById('miss-slot').value;
-  // Determine missing based on slot filter
-  const slotsToCheck=selSlot==='all'?SLOTS:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
-  const submittedBranches=new Set(entries.filter(e=>e.date===date).map(e=>e.branch));
+  const slotsToCheck=getSelectedSlots(selSlot);
   const missBranches=[];const partial=[];const ok=[];
   BRANCHES.forEach(b=>{
     const e=entries.find(x=>x.branch===b&&x.date===date);
     if(!e){missBranches.push(b);return;}
-    const hasSlots=slotsToCheck.every(s=>ITEMS.some(item=>(e.items[item.id]||{})[s.key]>0));
-    hasSlots?ok.push(b):partial.push(b);
+    isCompleteForFilter(e,itemId,slotsToCheck)?ok.push(b):partial.push(b);
   });
   document.getElementById('miss-metrics').innerHTML=`
     <div class="metric-card"><div class="metric-num" style="color:var(--red)">${missBranches.length}</div><div class="metric-label">Not submitted</div></div>
     <div class="metric-card"><div class="metric-num" style="color:var(--yellow)">${partial.length}</div><div class="metric-label">Partial</div></div>
     <div class="metric-card"><div class="metric-num" style="color:var(--green)">${ok.length}</div><div class="metric-label">Complete</div></div>`;
   const list=document.getElementById('miss-list');list.innerHTML='';
-  if(!missBranches.length&&!partial.length){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2);font-size:14px">✓ All branches submitted complete entries.</div>';return;}
+  if(!missBranches.length&&!partial.length){list.innerHTML='<div style="text-align:center;padding:2rem;color:var(--text2);font-size:14px">âœ“ All branches submitted complete entries.</div>';return;}
 
   const makeSection=(title,branches,type)=>{
     if(!branches.length)return;
@@ -1045,13 +1108,14 @@ function renderMissing(){
     branches.forEach(b=>{
       const div=document.createElement('div');div.className='miss-card';
       const waId='wa_'+b.replace(/[^a-z0-9]/gi,'_');
-      // Figure out which slots are missing
       const e=entries.find(x=>x.branch===b&&x.date===date);
-      const missSlotLabels=slotsToCheck.filter(s=>!e||!ITEMS.some(item=>(e.items[item.id]||{})[s.key]>0)).map(s=>s.entryLabel);
+      const missSlotLabels=getMissingSlotLabelsForFilter(e,itemId,slotsToCheck);
+      const itemLabel=itemId==='all'?'All items':(ITEMS.find(item=>item.id===itemId)?.label||'Selected item');
       div.innerHTML=`
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span style="font-size:14px;font-weight:500">${b}</span>
           <span class="badge badge-${type==='miss'?'miss':'partial'}">${type==='miss'?'Not submitted':'Partial'}</span>
+          <span style="font-size:11px;color:var(--text2)">${itemLabel}</span>
           ${missSlotLabels.length?'<span style="font-size:11px;color:var(--text2)">Missing: '+missSlotLabels.join(', ')+'</span>':''}
         </div>
         <div style="display:flex;align-items:center;gap:8px">
@@ -1068,8 +1132,65 @@ function renderMissing(){
   makeSection('Partial entries',partial,'partial');
 }
 
+function renderSizeList(){
+  const date=document.getElementById('size-date').value;
+  const itemId=document.getElementById('size-item').value;
+  const selSlot=document.getElementById('size-slot').value;
+  const search=(document.getElementById('size-search').value||'').trim().toLowerCase();
+  const slotsToCheck=getSelectedSlots(selSlot);
+  const itemLabel=itemId==='all'?'All Items':(ITEMS.find(item=>item.id===itemId)?.label||'Selected Item');
+  const slotLabel=selSlot==='all'?'All Slots':(SLOTS.find(slot=>slot.key===selSlot)?.entryLabel||selSlot);
+
+  const rows=BRANCHES.map(branch=>{
+    const entry=entries.find(x=>x.branch===branch&&x.date===date);
+    const missSlotLabels=getMissingSlotLabelsForFilter(entry,itemId,slotsToCheck);
+    if(!missSlotLabels.length)return null;
+    if(search && !branch.toLowerCase().includes(search))return null;
+    return {branch,missSlotLabels,status:entry?'Partial':'Not submitted'};
+  }).filter(Boolean);
+
+  const notSubmitted=rows.filter(row=>row.status==='Not submitted').length;
+  const partial=rows.filter(row=>row.status==='Partial').length;
+  document.getElementById('size-metrics').innerHTML=`
+    <div class="metric-card"><div class="metric-num" style="color:var(--red)">${rows.length}</div><div class="metric-label">Filtered Missing</div></div>
+    <div class="metric-card"><div class="metric-num" style="color:var(--red)">${notSubmitted}</div><div class="metric-label">Not Submitted</div></div>
+    <div class="metric-card"><div class="metric-num" style="color:var(--yellow)">${partial}</div><div class="metric-label">Partial</div></div>`;
+
+  const capture=document.getElementById('missing-list-capture');
+  capture.innerHTML='';
+  const hdr=document.createElement('div');
+  hdr.className='rep-hdr';
+  hdr.innerHTML=`<div class="rep-hdr-title">Missing Branches List</div>
+    <div class="rep-hdr-sub">${fmtDate(date)} | ${itemLabel} | ${slotLabel}${search?` | Search: ${search}`:''}</div>`;
+  capture.appendChild(hdr);
+
+  const wrap=document.createElement('div');
+  wrap.className='report-wrap';
+  if(!rows.length){
+    wrap.innerHTML=`<div style="padding:24px;text-align:center;color:var(--text2);font-size:14px">No missing branches for the selected filters.</div>`;
+    capture.appendChild(wrap);
+    return;
+  }
+
+  const rowsHtml=rows.map(row=>`<tr>
+      <td style="font-weight:500">${row.branch}</td>
+      <td>${row.status}</td>
+      <td>${row.missSlotLabels.join(', ')}</td>
+    </tr>`).join('');
+  wrap.innerHTML=`
+    <div class="report-title-bar">
+      <span class="report-title">${rows.length} Branches Need Entry</span>
+      <span style="font-size:12px;color:var(--text2)">${fmtDate(date)}</span>
+    </div>
+    <div style="overflow-x:auto"><table class="report">
+      <thead><tr><th>Branch</th><th>Status</th><th>Missing Slot</th></tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table></div>`;
+  capture.appendChild(wrap);
+}
+
 function buildWAMessage(branch,date,missSlots){
-  const slotLines=missSlots.length>0?missSlots.map(s=>`• ${s}`).join('\n'):'• All slots pending';
+  const slotLines=missSlots.length>0?missSlots.map(s=>`â€¢ ${s}`).join('\n'):'â€¢ All slots pending';
   return `Hi ${branch} team,\n\nYour stock entry for ${date} is pending.\nPlease submit at:\n${slotLines}\n\nThank you.`;
 }
 
@@ -1100,7 +1221,7 @@ function sendAllMissingWA(){
     const msg=encodeURIComponent(buildWAMessage(b,date,missSlots));
     setTimeout(()=>window.open(`https://wa.me/${num}?text=${msg}`,'_blank'),i*700);
   });
-  showToast(`📱 Opening WhatsApp for ${toSend.length} branches…`);
+  showToast(`Opening WhatsApp for ${toSend.length} branches...`);
 }
 
 // ============================================================
@@ -1123,7 +1244,7 @@ function printReport(){
     tr.zero td{color:#ccc}tr.total-row td{font-weight:700;background:#f5f5f5;border-top:1px solid #ddd}
     @media print{button{display:none!important}}
   </style></head><body>`);
-  win.document.write('<button onclick="window.print()" style="margin-bottom:16px;padding:8px 18px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-family:inherit">🖨 Print</button>');
+  win.document.write('<button onclick="window.print()" style="margin-bottom:16px;padding:8px 18px;cursor:pointer;border:1px solid #ccc;border-radius:4px;background:#fff;font-family:inherit">Print</button>');
   win.document.write(capture.innerHTML);win.document.write('</body></html>');win.document.close();
 }
 
@@ -1131,7 +1252,7 @@ function downloadImage(){
   const capture=document.getElementById('report-capture');
   if(!capture.innerHTML.trim()){showToast('Click "Load from Sheet" first');return;}
   const btn=document.getElementById('dl-btn');
-  btn.textContent='Generating…';btn.disabled=true;
+  btn.textContent='Generating...';btn.disabled=true;
   const origBg=capture.style.background;capture.style.background='#ffffff';
   html2canvas(capture,{backgroundColor:'#ffffff',scale:2,useCORS:true,logging:false,allowTaint:true}).then(canvas=>{
     const link=document.createElement('a');
@@ -1147,10 +1268,10 @@ function downloadImage(){
     link.click();
     capture.style.background=origBg;
     btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PNG';
-    btn.disabled=false;showToast('✓ PNG downloaded!');
+    btn.disabled=false;showToast('PNG downloaded');
   }).catch(()=>{
     capture.style.background=origBg;
-    showToast('Download failed — try Print instead');
+    showToast('Download failed - try Print instead');
     btn.innerHTML='Download PNG';btn.disabled=false;
   });
 }
@@ -1160,8 +1281,8 @@ function downloadImage(){
 // ============================================================
 function updatePendingInfo(){
   const el=document.getElementById('pending-info');if(!el)return;
-  if(pendingQueue.length>0){el.innerHTML='⚠️ <strong>'+pendingQueue.length+' row(s)</strong> queued — not yet synced to Sheet.';el.style.color='var(--yellow)';}
-  else{el.innerHTML='✓ All entries are synced to Google Sheet.';el.style.color='var(--green)';}
+  if(pendingQueue.length>0){el.innerHTML='<strong>'+pendingQueue.length+' row(s)</strong> queued - not yet synced to Sheet.';el.style.color='var(--yellow)';}
+  else{el.innerHTML='All entries are synced to Google Sheet.';el.style.color='var(--green)';}
 }
 function clearLocalData(){
   if(!confirm('Clear all locally stored data?\n\nGoogle Sheet is NOT affected.\nPending (unsynced) entries will be lost.'))return;
@@ -1222,12 +1343,13 @@ function checkReminders(){
 
 function sendAllMissingWA(){
   const date=document.getElementById('miss-date').value;
+  const itemId=document.getElementById('miss-item').value;
   const selSlot=document.getElementById('miss-slot').value;
-  const slotsToCheck=selSlot==='all'?SLOTS:[SLOTS.find(s=>s.key===selSlot)].filter(Boolean);
+  const slotsToCheck=getSelectedSlots(selSlot);
   const toSend=[];
   BRANCHES.forEach(b=>{
     const e=entries.find(x=>x.branch===b&&x.date===date);
-    const missSlots=getMissingSlotLabels(e,slotsToCheck);
+    const missSlots=getMissingSlotLabelsForFilter(e,itemId,slotsToCheck);
     if(missSlots.length>0&&PHONE_NUMBERS[b])toSend.push({b,missSlots});
   });
   if(!toSend.length){showToast('No missing branches with phone numbers');return;}
@@ -1276,6 +1398,34 @@ function downloadImage(){
     showToast('Download failed - try Print instead');
     btn.innerHTML='Download PNG';
     btn.disabled=false;
+  });
+}
+
+function downloadMissingListImage(){
+  const capture=document.getElementById('missing-list-capture');
+  if(!capture.innerHTML.trim()){showToast('No missing list to download');return;}
+  const btn=document.getElementById('miss-list-dl-btn');
+  btn.textContent='Generating...';btn.disabled=true;
+  const origBg=capture.style.background;capture.style.background='#ffffff';
+  html2canvas(capture,{backgroundColor:'#ffffff',scale:1.2,useCORS:true,logging:false,allowTaint:true}).then(canvas=>{
+    const link=document.createElement('a');
+    const date=document.getElementById('size-date').value||today();
+    const itemId=document.getElementById('size-item').value;
+    const itemName=(itemId==='all'?'AllItems':(ITEMS.find(item=>item.id===itemId)?.label||'Item')).replace(/[^a-zA-Z0-9]/g,'_');
+    const slotKey=document.getElementById('size-slot').value;
+    const slotLabel=(slotKey==='all'?'AllSlots':slotKey).replace(/[^a-zA-Z0-9]/g,'_');
+    link.download=`MissingBranches_${itemName}_${slotLabel}_${date}.png`;
+    link.href=canvas.toDataURL('image/png');
+    link.click();
+    capture.style.background=origBg;
+    btn.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download PNG';
+    btn.disabled=false;
+    showToast('PNG downloaded');
+  }).catch(()=>{
+    capture.style.background=origBg;
+    btn.innerHTML='Download PNG';
+    btn.disabled=false;
+    showToast('Download failed - try again');
   });
 }
 
