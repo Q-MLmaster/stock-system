@@ -110,6 +110,24 @@ table.report tr.zero td{color:var(--text3)}
 .login-field input:focus{border-color:var(--accent);background:var(--card)}
 .login-btn{width:100%;height:44px;background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:opacity 0.15s;margin-top:0.5rem}
 .login-btn:hover{opacity:0.87}
+.login-pass-wrap{position:relative}
+.login-pass-wrap input{padding-right:44px}
+.pass-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;display:flex;align-items:center;transition:color 0.15s}
+.pass-toggle:hover{color:var(--text)}
+/* Save credentials popup */
+#save-cred-popup{position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:2000;display:none;align-items:center;justify-content:center;padding:1.5rem}
+.save-cred-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.75rem 1.5rem;width:100%;max-width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.14);text-align:center}
+.save-cred-icon{width:48px;height:48px;background:var(--indigo-bg);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.save-cred-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px}
+.save-cred-sub{font-size:13px;color:var(--text2);margin-bottom:1.25rem;line-height:1.5}
+.save-cred-user{font-size:12px;font-weight:600;background:var(--bg);border:1px solid var(--border);border-radius:99px;padding:4px 14px;display:inline-block;margin-bottom:1.25rem;color:var(--text);font-family:'DM Mono',monospace}
+.save-cred-btns{display:flex;gap:8px}
+.save-cred-btns button{flex:1;height:40px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.btn-save-yes{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)!important}
+.btn-save-yes:hover{opacity:0.87}
+.btn-save-no{background:var(--card);color:var(--text2)}
+.btn-save-no:hover{background:var(--bg)}
+.saved-cred-hint{font-size:11px;color:var(--green);background:var(--green-bg);border-radius:99px;padding:3px 12px;display:inline-block;margin-top:10px;font-weight:500}
 .login-err{font-size:12px;color:var(--red);margin-top:10px;min-height:16px;text-align:center;font-weight:500}
 .login-divider{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
 .login-hint{font-size:11.5px;color:var(--text3);text-align:center;line-height:1.6}
@@ -179,12 +197,34 @@ table.report tr.zero td{color:var(--text3)}
     </div>
     <div class="login-field">
       <label>Password</label>
-      <input type="password" id="login-pass" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+      <div class="login-pass-wrap">
+        <input type="password" id="login-pass" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <button class="pass-toggle" type="button" onclick="togglePassword()" id="pass-toggle-btn" title="Show/hide password">
+          <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
     </div>
+    <div id="saved-cred-hint" style="display:none;margin-bottom:10px"></div>
     <button class="login-btn" onclick="doLogin()">Sign In</button>
     <div class="login-err" id="login-err"></div>
     <hr class="login-divider">
     <div class="login-hint">Authorised personnel only. Contact your manager if you don't have credentials.</div>
+  </div>
+</div>
+
+<!-- ===== SAVE CREDENTIALS POPUP ===== -->
+<div id="save-cred-popup">
+  <div class="save-cred-card">
+    <div class="save-cred-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </div>
+    <div class="save-cred-title">Save your login?</div>
+    <div class="save-cred-sub">Would you like to save your credentials so you don't have to type them next time?</div>
+    <div class="save-cred-user" id="save-cred-username"></div>
+    <div class="save-cred-btns">
+      <button class="btn-save-no" onclick="dismissSaveCred()">Not now</button>
+      <button class="btn-save-yes" onclick="saveCredentials()">Save credentials</button>
+    </div>
   </div>
 </div>
 
@@ -501,7 +541,7 @@ const DEFAULT_ITEMS=[
   {id:"alfaham",      label:"Alfaham",             uom:"CVR", factor:4.8},
   {id:"tandoori",     label:"Tandoori Chicken",    uom:"CVR", factor:5.25},
   {id:"grill",        label:"Grill Chicken",       uom:"CVR", factor:4.25},
-  {id:"butter",       label:"Butter Chicken",      uom:"KG",  factor:1},
+  {id:"butter",       label:"Butter Chicken",      uom:"LTR", factor:1},
   {id:"kabab",        label:"Kabab Masala",        uom:"CVR", factor:1.5},
   {id:"tandoori_ball",label:"Tandoori Ball 125g",  uom:"BOX", factor:3.75},
   {id:"parota_ball",  label:"Parota Ball 125g",    uom:"BOX", factor:4.5}
@@ -546,7 +586,9 @@ function savePhones(){try{localStorage.setItem('tgfPhones',JSON.stringify(PHONE_
 function saveNotified(){try{localStorage.setItem('tgfNotified',JSON.stringify(notifiedToday))}catch(e){}}
 function toKG(item,qty){return Math.round(qty*(item.factor||1)*100)/100;}
 function getOutputUnit(item){
-  return (item&&item.factor===1&&item.uom)?item.uom:'KG';
+  if(!item) return 'KG';
+  if(item.factor===1 && item.uom) return item.uom;
+  return 'KG';
 }
 
 window.addEventListener('beforeunload',function(ev){
@@ -881,7 +923,8 @@ function buildEntryItems(){
       SLOTS.map(s=>`<input type="number" min="0" step="0.01" placeholder="0" id="${item.id}_${s.key}" oninput="previewKG('${item.id}','${s.key}',this.value,${item.factor})">`).join('');
     c.appendChild(row);
     const prev=document.createElement('div');prev.className='item-kg-row';
-    prev.innerHTML=`<div style="font-size:10px;color:var(--text3);padding:0 4px">-> KG</div><div></div>`+
+    const outUnit=getOutputUnit(item);
+    prev.innerHTML=`<div style="font-size:10px;color:var(--text3);padding:0 4px">-> ${outUnit}</div><div></div>`+
       SLOTS.map(s=>`<div id="${item.id}_${s.key}_kg" class="kg-preview"></div>`).join('');
     c.appendChild(prev);
   });
@@ -1494,6 +1537,9 @@ const LOGIN_USERS = [
 ];
 const SESSION_KEY = "tgfLoginSession";
 
+const SAVED_CRED_KEY = "tgfSavedCred";
+let _pendingSaveMatch = null;
+
 function checkSession() {
   try {
     const s = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
@@ -1502,6 +1548,73 @@ function checkSession() {
   return null;
 }
 
+// ---- Password show/hide ----
+function togglePassword() {
+  const inp = document.getElementById("login-pass");
+  const icon = document.getElementById("eye-icon");
+  const isHidden = inp.type === "password";
+  inp.type = isHidden ? "text" : "password";
+  // swap icon: open eye <-> closed eye
+  icon.innerHTML = isHidden
+    ? `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`
+    : `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+}
+
+// ---- Saved credentials ----
+function loadSavedCred() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVED_CRED_KEY) || "null");
+    if (saved && saved.username && saved.password) {
+      document.getElementById("login-user").value = saved.username;
+      document.getElementById("login-pass").value = saved.password;
+      const hint = document.getElementById("saved-cred-hint");
+      hint.style.display = "block";
+      hint.innerHTML = `<span style="font-size:12px;color:var(--green);display:flex;align-items:center;gap:6px;background:var(--green-bg);padding:6px 12px;border-radius:99px;font-weight:500">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Saved credentials loaded &nbsp;·&nbsp; <button onclick="clearSavedCred()" style="background:none;border:none;color:var(--red);font-size:12px;cursor:pointer;font-weight:600;padding:0;font-family:'DM Sans',sans-serif">Remove</button>
+      </span>`;
+    }
+  } catch(e) {}
+}
+
+function clearSavedCred() {
+  localStorage.removeItem(SAVED_CRED_KEY);
+  document.getElementById("login-user").value = "";
+  document.getElementById("login-pass").value = "";
+  const hint = document.getElementById("saved-cred-hint");
+  hint.style.display = "none";
+  hint.innerHTML = "";
+  document.getElementById("login-user").focus();
+}
+
+function saveCredentials() {
+  if (!_pendingSaveMatch) return;
+  localStorage.setItem(SAVED_CRED_KEY, JSON.stringify({
+    username: _pendingSaveMatch.username,
+    password: _pendingSaveMatch.password
+  }));
+  dismissSaveCred();
+  showToast("Credentials saved — you'll be logged in automatically next time!");
+}
+
+function dismissSaveCred() {
+  document.getElementById("save-cred-popup").style.display = "none";
+  _pendingSaveMatch = null;
+}
+
+function showSaveCredPopup(match) {
+  // Don't show popup if already saved for this user
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVED_CRED_KEY) || "null");
+    if (saved && saved.username === match.username && saved.password === match.password) return;
+  } catch(e) {}
+  _pendingSaveMatch = match;
+  document.getElementById("save-cred-username").textContent = match.username;
+  const popup = document.getElementById("save-cred-popup");
+  popup.style.display = "flex";
+}
+
+// ---- Login ----
 function doLogin() {
   const u = (document.getElementById("login-user").value || "").trim().toLowerCase();
   const p = (document.getElementById("login-pass").value || "").trim();
@@ -1516,6 +1629,8 @@ function doLogin() {
   }
   sessionStorage.setItem(SESSION_KEY, JSON.stringify({ label: match.label, username: match.username, role: match.role }));
   showApp(match.label, match.role);
+  // Show save credentials popup after a short delay
+  setTimeout(() => showSaveCredPopup(match), 600);
 }
 
 function doLogout() {
@@ -1525,6 +1640,7 @@ function doLogout() {
   document.getElementById("login-overlay").style.display = "flex";
   document.getElementById("login-user").value = "";
   document.getElementById("login-pass").value = "";
+  loadSavedCred(); // re-fill saved creds on logout
   document.getElementById("login-user").focus();
 }
 
@@ -1565,11 +1681,15 @@ function showApp(label, role) {
   } else {
     document.getElementById("login-overlay").style.display = "flex";
     document.getElementById("main-app").style.display = "none";
-    setTimeout(() => document.getElementById("login-user").focus(), 100);
+    loadSavedCred(); // auto-fill saved credentials
+    setTimeout(() => {
+      const u = document.getElementById("login-user").value;
+      if (u) document.getElementById("login-pass").focus();
+      else document.getElementById("login-user").focus();
+    }, 100);
   }
   buildForm();
 })();
 </script>
 </body>
 </html>
-
